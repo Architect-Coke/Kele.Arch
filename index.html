@@ -325,8 +325,12 @@
                                     </span>
                                 </motion.div>
                                 
-                                {/* 强制不换行，且字号根据屏幕宽度动态缩放：最小不低于2.5rem，最大84px */}
-                                <motion.h1 variants={fadeUpSpringVariant} className="text-[clamp(2.5rem,11.5vw,84px)] whitespace-nowrap font-[900] tracking-tight text-[#1D1D1F] leading-[1.05] mb-6">
+                                {/* 强制绝对单行显示：降低手机端的最小字号边界，并使用内联样式确保任何浏览器下都绝对不会换行 */}
+                                <motion.h1 
+                                    variants={fadeUpSpringVariant} 
+                                    className="font-[900] tracking-tight text-[#1D1D1F] leading-[1.05] mb-6"
+                                    style={{ whiteSpace: 'nowrap', fontSize: 'clamp(26px, 10vw, 84px)' }}
+                                >
                                     AIGC + 设计
                                 </motion.h1>
                                 
@@ -375,24 +379,40 @@
                         </div>
                     </section>
 
-                    {/* 能力板块 (关于) */}
+                    {/* 能力板块 (关于) - 统一大字百叶窗排版 */}
                     <section id="about" className="py-32 bg-white px-8 md:px-16">
                         <div className="max-w-[1400px] mx-auto">
                             <motion.div 
                                 key={`about-head-${navKeys.about}`}
-                                className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-6"
-                                variants={fadeUpSpringVariant}
+                                className="mb-16 text-center flex flex-col items-center justify-center" 
+                                variants={textBlindsContainer}
                                 initial="hidden"
                                 whileInView="visible"
                                 viewport={{ once: true, amount: 0.2 }}
                             >
-                                <div className="max-w-3xl">
-                                    <h3 className="text-[#5D5FEF] font-bold tracking-[0.2em] text-sm mb-6 flex items-center gap-3">
-                                        <span className="w-8 h-[2px] bg-[#5D5FEF]"></span>CORE CAPABILITIES
-                                    </h3>
-                                    <h2 className="text-4xl md:text-5xl font-black text-[#1D1D1F] leading-tight">连接实体工程与数字美学的<br/>核心竞争力</h2>
+                                <div className="relative inline-block px-2">
+                                    <motion.h2 
+                                        className="flex justify-center text-[3.2rem] sm:text-[5.6rem] md:text-[7.6rem] font-[900] text-black/30 leading-none tracking-tighter uppercase cursor-default origin-center transition-colors duration-300 hover:text-[#5D5FEF]"
+                                        whileHover={{ scale: 1.03 }}
+                                        style={{ perspective: 1000 }}
+                                    >
+                                        {"ABOUT".split("").map((char, index) => (
+                                            <motion.span 
+                                                key={index} 
+                                                variants={textBlindsChild}
+                                                style={{ display: "inline-block", transformOrigin: "bottom" }}
+                                            >
+                                                {char}
+                                            </motion.span>
+                                        ))}
+                                    </motion.h2>
                                 </div>
-                                <p className="text-neutral-400 text-lg font-medium md:max-w-xs leading-relaxed">跨越维度，从砖瓦到像素，始终坚持以逻辑驱动创意。</p>
+                                <motion.p 
+                                    variants={textBlindsChild} 
+                                    className="mt-4 md:mt-6 text-[16px] md:text-[20px] text-neutral-500 font-light tracking-[0.3em] text-center ml-[0.3em]"
+                                >
+                                    核心竞争力
+                                </motion.p>
                             </motion.div>
                             
                             <motion.div 
