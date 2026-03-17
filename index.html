@@ -614,7 +614,7 @@
                         </AnimatePresence>
                     </section>
 
-                    {/* 作品详情页 (修复对齐问题) */}
+                    {/* 作品详情页 (增加悬浮返回按钮，修复滚动层级) */}
                     <AnimatePresence>
                         {activeProject && (
                             <motion.div 
@@ -622,43 +622,65 @@
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: "100%" }}
                                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                                className="fixed inset-0 bg-[#F8F9FA] z-[120] overflow-y-auto"
+                                className="fixed inset-0 z-[120] bg-[#F8F9FA]"
                             >
-                                <div className="bg-white border-b border-neutral-100">
-                                    <div className="max-w-[1200px] mx-auto pt-12 md:pt-20 pb-12 px-6 md:px-16">
-                                        <button 
-                                            onClick={() => setActiveProject(null)} 
-                                            className="inline-flex items-center gap-2 text-[14px] text-neutral-500 hover:text-[#1D1D1F] transition-colors font-medium mb-10"
-                                        >
-                                            <i data-lucide="arrow-left" className="w-4 h-4"></i> 返回作品集
-                                        </button>
-                                        <h1 className="text-3xl md:text-4xl lg:text-[42px] font-black text-[#1D1D1F] mb-6 tracking-tight">
-                                            {activeProject.title}
-                                        </h1>
-                                        <p className="text-[15px] md:text-[17px] text-neutral-500 leading-relaxed max-w-4xl">
-                                            {activeProject.fullDescription || activeProject.description}
-                                        </p>
-                                    </div>
-                                </div>
+                                {/* ================= 新增：全局悬浮操作按钮 ================= */}
+                                {/* 右上角固定关闭按钮 (X) */}
+                                <button 
+                                    onClick={() => setActiveProject(null)} 
+                                    className="absolute top-4 right-4 md:top-8 md:right-8 w-10 h-10 md:w-12 md:h-12 bg-white/80 backdrop-blur-md border border-neutral-100 shadow-lg rounded-full flex items-center justify-center text-neutral-500 hover:text-[#1D1D1F] hover:bg-neutral-50 transition-all z-20"
+                                >
+                                    <i data-lucide="x" className="w-5 h-5"></i>
+                                </button>
 
-                                {/* 长图内容区 */}
-                                <div className="max-w-[1200px] mx-auto py-12 md:py-16 px-6 md:px-16 flex flex-col gap-10 md:gap-16 pb-32">
-                                    {activeProject.detailImages.map((imgUrl, idx) => (
-                                        <motion.div
-                                            key={idx}
-                                            initial={{ opacity: 0, y: 40 }}
-                                            whileInView={{ opacity: 1, y: 0 }}
-                                            viewport={{ once: true, margin: "-100px" }}
-                                            transition={{ duration: 0.6, ease: "easeOut" }}
-                                            className="w-full bg-white rounded-2xl md:rounded-[1.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.06)] overflow-hidden border border-neutral-100"
-                                        >
-                                            <img 
-                                                src={imgUrl} 
-                                                alt={`${activeProject.title} 展示图 ${idx + 1}`} 
-                                                className="w-full h-auto block"
-                                            />
-                                        </motion.div>
-                                    ))}
+                                {/* 右下角固定返回按钮 */}
+                                <button 
+                                    onClick={() => setActiveProject(null)} 
+                                    className="absolute bottom-8 right-8 md:bottom-12 md:right-12 px-5 md:px-6 py-3 md:py-3.5 bg-[#1D1D1F]/90 backdrop-blur-md text-white text-[13px] md:text-[14px] font-medium rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.2)] hover:bg-[#5D5FEF] transition-all hover:-translate-y-1 active:scale-95 flex items-center gap-2 group z-20"
+                                >
+                                    <i data-lucide="arrow-left" className="w-4 h-4 group-hover:-translate-x-1 transition-transform"></i>
+                                    返回作品集
+                                </button>
+
+                                {/* ================= 滚动内容区域 ================= */}
+                                <div className="absolute inset-0 overflow-y-auto z-10">
+                                    <div className="bg-white border-b border-neutral-100">
+                                        <div className="max-w-[1200px] mx-auto pt-12 md:pt-20 pb-12 px-6 md:px-16">
+                                            {/* 原本顶部的返回按钮保留，符合刚点开时的直觉操作 */}
+                                            <button 
+                                                onClick={() => setActiveProject(null)} 
+                                                className="inline-flex items-center gap-2 text-[14px] text-neutral-500 hover:text-[#1D1D1F] transition-colors font-medium mb-10"
+                                            >
+                                                <i data-lucide="arrow-left" className="w-4 h-4"></i> 返回作品集
+                                            </button>
+                                            <h1 className="text-3xl md:text-4xl lg:text-[42px] font-black text-[#1D1D1F] mb-6 tracking-tight">
+                                                {activeProject.title}
+                                            </h1>
+                                            <p className="text-[15px] md:text-[17px] text-neutral-500 leading-relaxed max-w-4xl">
+                                                {activeProject.fullDescription || activeProject.description}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* 长图内容区 */}
+                                    <div className="max-w-[1200px] mx-auto py-12 md:py-16 px-6 md:px-16 flex flex-col gap-10 md:gap-16 pb-32">
+                                        {activeProject.detailImages.map((imgUrl, idx) => (
+                                            <motion.div
+                                                key={idx}
+                                                initial={{ opacity: 0, y: 40 }}
+                                                whileInView={{ opacity: 1, y: 0 }}
+                                                viewport={{ once: true, margin: "-100px" }}
+                                                transition={{ duration: 0.6, ease: "easeOut" }}
+                                                className="w-full bg-white rounded-2xl md:rounded-[1.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.06)] overflow-hidden border border-neutral-100"
+                                            >
+                                                <img 
+                                                    src={imgUrl} 
+                                                    alt={`${activeProject.title} 展示图 ${idx + 1}`} 
+                                                    className="w-full h-auto block"
+                                                />
+                                            </motion.div>
+                                        ))}
+                                    </div>
                                 </div>
                             </motion.div>
                         )}
