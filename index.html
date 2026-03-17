@@ -325,7 +325,8 @@
                                     </span>
                                 </motion.div>
                                 
-                                <motion.h1 variants={fadeUpSpringVariant} className="text-6xl md:text-[84px] font-[900] tracking-tight text-[#1D1D1F] leading-[1.05] mb-6">
+                                {/* 强制不换行，且字号根据屏幕宽度动态缩放：最小不低于2.5rem，最大84px */}
+                                <motion.h1 variants={fadeUpSpringVariant} className="text-[clamp(2.5rem,11.5vw,84px)] whitespace-nowrap font-[900] tracking-tight text-[#1D1D1F] leading-[1.05] mb-6">
                                     AIGC + 设计
                                 </motion.h1>
                                 
