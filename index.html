@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kele.Arch | AIGC + 设计</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide 图标库 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- React, ReactDOM, Babel, Framer Motion CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .bg-gradient-text {
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            background-image: linear-gradient(to right, #5D5FEF, #00D1FF);
+        }
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;  
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-white text-[#1D1D1F] antialiased selection:bg-indigo-100">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { motion, AnimatePresence } = window.Motion;
+
+        const App = () => {
+            const [isScrolled, setIsScrolled] = useState(false);
+            const [isMenuOpen, setIsMenuOpen] = useState(false);
+            const [qrModal, setQrModal] = useState({ isOpen: false, title: '', imgUrl: '' });
+            const [toastMsg, setToastMsg] = useState('');
+            const [navKeys, setNavKeys] = useState({ home: 0, about: 0, works: 0, contact: 0 });
+            
+            // 全屏项目详情页状态
+            const [activeProject, setActiveProject] = useState(null);
+
+            useEffect(() => {
+                const handleScroll = () => {
+                    setIsScrolled(window.scrollY > 20);
+                };
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            // 防止打开模态框/详情页时背景滚动
+            useEffect(() => {
+                if (activeProject || qrModal.isOpen) {
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = 'unset';
+                }
+                return () => { document.body.style.overflow = 'unset'; }
+            }, [activeProject, qrModal.isOpen]);
+
+            // 每次重新渲染后刷新 Lucide 图标
+            useEffect(() => {
+                lucide.createIcons();
+            });
+
+            const handleCopy = (text) => {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    setToastMsg('邮箱地址已复制到剪贴板！');
+                    setTimeout(() => setToastMsg(''), 3000);
+                } catch (err) {
+                    console.error('复制失败', err);
+                }
+                document.body.removeChild(textArea);
+            };
+
+            const handleNavClick = (e, index) => {
+                e.preventDefault();
+                const sections = ['home', 'about', 'works', 'contact'];
+                const target = sections[index];
+                
+                setNavKeys(prev => ({ ...prev, [target]: prev[target] + 1 }));
+
+                if (target === 'home') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    const el = document.getElementById(target);
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }
+                setIsMenuOpen(false);
+            };
+
+            // 动画配置
+            const springDampingTransition = {
+                type: "spring",
+                stiffness: 50,
+                damping: 14,
+                mass: 1
+            };
+
+            const fadeUpSpringVariant = {
+                hidden: { opacity: 0, y: 25 },
+                visible: { opacity: 1, y: 0, transition: springDampingTransition }
+            };
+
+            const slowStaggerContainer = {
+                hidden: { opacity: 0 },
+                visible: { 
+                    opacity: 1, 
+                    transition: { staggerChildren: 0.2 } 
+                }
+            };
+
+            const textBlindsContainer = {
+                hidden: { opacity: 0 },
+                visible: { 
+                    opacity: 1, 
+                    transition: { staggerChildren: 0.06, delayChildren: 0.1 } 
+                }
+            };
+
+            const textBlindsChild = {
+                hidden: { opacity: 0, y: 40, scale: 0.7 },
+                visible: { 
+                    opacity: 1, 
+                    y: 0, 
+                    scale: 1, 
+                    transition: { type: "spring", stiffness: 150, damping: 15 } 
+                }
+            };
+
+            const capabilities = [
+                { icon: "layout", title: "空间逻辑构建", desc: "基于 15 年建筑设计经验，将严谨的工程思维注入创意方案，确保空间功能与美学的深度统一。" },
+                { icon: "sparkles", title: "AIGC 美学把控", desc: "熟练运用 Stable Diffusion、Midjourney 等工具，通过精确的提示词工程实现对设计风格的工业级控制。" },
+                { icon: "cpu", title: "数字化产品落地", desc: "作为系统集成项目管理师，打通物理建筑与数字孪生平台的边界，实现从概念设计到技术落地的全链路闭环。" }
+            ];
+
+            // 包含定制全屏文案的交互项目
+            const projects = [
+                { id: 2, title: "AIGC+建筑空间美学", image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=600", description: "基于 Midjourney 和 Stable Diffusion 工作流的建筑级空间生成项目。", tags: ["Midjourney", "Stable Diffusion", "空间生成"] },
+                { id: 3, title: "AIGC 视觉生成", image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600", description: "融合 16 年原创教程开发经验，将专业技术拆解为零基础可上手的 SOP 路径。", tags: ["知识产品化", "视觉生成", "AI 艺术"] },
+                { id: 4, title: "AIGC 动态影像", image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=600", description: "探索 AI 技术在动态影像领域的应用，打造高品质的视觉内容与运动图形。", tags: ["动态影像", "视频制作", "运动图形"] },
+                { 
+                    id: 1, 
+                    title: "交互与沉浸体验", 
+                    image: "images/可乐交互案例 (1).jpg", 
+                    description: "探索数字与三维空间边界，交互应用案例。", 
+                    fullDescription: "探索数字与物理空间的边界，主导 3D 交互应用的从 0 到 1 落地。平衡极致的 WebGL 渲染性能与高品质视觉体验，打造沉浸式的下一代数字化产品。",
+                    tags: ["产品管理", "UI/UX", "3D 交互"], 
+                    detailImages: ["images/可乐交互案例 (1).jpg", "images/可乐交互案例 (2).jpg", "images/可乐交互案例 (3).jpg"] 
+                },
+                { 
+                    id: 5, 
+                    title: "城市更新", 
+                    image: "images/城市更新 (1).jpg", 
+                    description: "作为国家一级注册建筑师落地的大量实体空间项目。", 
+                    fullDescription: "深耕城市存量更新领域，涵盖社区驿站、街区公共空间、老旧市场改造等多维度实践。作为项目负责人/总监主导从前期策划、方案独立设计到施工管理落地的全过程。",
+                    tags: ["城市更新", "实体工程", "空间逻辑"],
+                    detailImages: [
+                        "images/城市更新 (1).jpg", // 2023年 - 峨山菜市场
+                        "images/城市更新 (2).jpg",
+                        "images/城市更新 (3).jpg", // 2023年 - 灵新市民驿站
+                        "images/城市更新 (4).jpg",
+                        "images/城市更新 (5).jpg",
+                        "images/城市更新 (6).jpg", // 2024年 - 华一新城
+                        "images/城市更新 (7).jpg",
+                        "images/城市更新 (8).jpg", // 2025年 - 海湾新苑
+                        "images/城市更新 (9).jpg"
+                    ]
+                },
+                { 
+                    id: 6, 
+                    title: "城市设计", 
+                    image: "images/城市设计 (2).jpg", 
+                    description: "从宏观的城市规划视角出发，塑造具有地域特色与时代精神的城市空间。", 
+                    fullDescription: "从宏观的城市规划视角出发，塑造具有地域特色与时代精神的城市空间。项目涵盖生态商务区、高铁客运枢纽核心区、滨水中心城区以及重点高校校区等多个维度的城市级总体设计与修建性详细规划。",
+                    tags: ["城市设计", "规划设计", "系统思维"],
+                    detailImages: [
+                        "images/城市设计 (2).jpg", // 2010年 - 松江新城
+                        "images/城市设计 (3).jpg",
+                        "images/城市设计 (4).jpg", // 2010年 - 营口开发区
+                        "images/城市设计 (5).jpg",
+                        "images/城市设计 (6).jpg", // 2011年 - 株洲中心城区
+                        "images/城市设计 (7).jpg",
+                        "images/城市设计 (8).jpg", // 2012年 - 复旦大学枫林校区
+                        "images/城市设计 (9).jpg"
+                    ]
+                },
+                { 
+                    id: 7, 
+                    title: "建筑设计", 
+                    image: "images/住宅商业 (2).jpg", 
+                    description: "回归理性空间，重新追求技术美与人情味的统一。", 
+                    fullDescription: "回归理性空间，重新追求技术美与人情味的统一。项目涵盖大型高品质居住社区、城市核心商业综合体等类型，在严谨的技术规范与商业逻辑之下，持续探索现代建筑的美学表达与人居体验。",
+                    tags: ["住宅建筑", "商业综合体", "高品质人居"],
+                    detailImages: [
+                        "images/住宅商业 (2).jpg", // 2013年 - 万科·奉贤南桥新城
+                        "images/住宅商业 (3).jpg",
+                        "images/住宅商业 (4).jpg", // 2013年 - 南通·万达广场
+                        "images/住宅商业 (5).jpg",
+                        "images/住宅商业 (6).jpg", // 2014年 - 安徽寿县·益兴中央广场
+                        "images/住宅商业 (7).jpg",
+                        "images/住宅商业 (8).jpg", // 2018年 - 贵州·同心综合体（已建成）
+                        "images/住宅商业 (9).jpg"
+                    ]
+                },
+                { 
+                    id: 8, 
+                    title: "乡村文旅", 
+                    image: "images/乡村文旅 (2).jpg", 
+                    description: "聚焦乡村振兴与美丽乡村建设，注重保留乡村原有肌理与乡土文化。", 
+                    fullDescription: "聚焦乡村振兴与美丽乡村建设，注重保留乡村原有肌理与乡土文化。项目涵盖村庄整体规划、老旧民居微更新、乡村产业植入以及文旅综合体设计，致力于打造望得见山、看得见水、记得住乡愁的现代宜居乡村。",
+                    tags: ["乡村振兴", "美丽乡村", "乡土文化"],
+                    detailImages: [
+                        "images/乡村文旅 (2).jpg", // 2019年 - 青浦区涂姚村乡村设计
+                        "images/乡村文旅 (3).jpg",
+                        "images/乡村文旅 (4).jpg", // 2021年 - 台州市三门县坎下金村村庄设计
+                        "images/乡村文旅 (5).jpg",
+                        "images/乡村文旅 (6).jpg", // 2021年 - 南安市码头镇乡村振兴
+                        "images/乡村文旅 (7).jpg",
+                        "images/乡村文旅 (8).jpg", // 2022年 - 湘西黄金茶科技博览园
+                        "images/乡村文旅 (9).jpg",
+                        "images/乡村文旅 (10).jpg",
+                        "images/乡村文旅 (11).jpg",
+                        "images/乡村文旅 (12).jpg", // 2024年 - 江西乔乐乡方岗村改造
+                        "images/乡村文旅 (13).jpg"
+                    ]
+                },
+                {
+                    id: 9,
+                    title: "公建设计",
+                    image: "images/公建设计 (5).jpg",
+                    description: "涵盖文化、教育、办公等多种类型的公共建筑设计，打造城市地标。",
+                    fullDescription: "深耕公共建筑领域，涵盖文化馆、图书馆、教育建筑及办公总部等多元类型。在设计中注重建筑与城市环境的融合，兼顾在地文化表达与现代空间体验，致力于打造具有时代精神与长久生命力的城市公共空间。",
+                    tags: ["公共建筑", "文化地标", "空间体验"],
+                    detailImages: [
+                        "images/公建设计 (5).jpg", // 2015年 - 湖南省妇女儿童医院
+                        "images/公建设计 (2).jpg", // 2016年 - 湖北公安县文化体育中心
+                        "images/公建设计 (3).jpg",
+                        "images/公建设计 (4).jpg", // 2016年 - 上海格蒂电力科技总部
+                        "images/公建设计 (1).jpg", // 2018年 - 淄博市淄川区青少年活动中心
+                        "images/公建设计 (8).jpg", // 2019年 - 青岛市城阳区规划建筑方案
+                        "images/公建设计 (9).jpg",
+                        "images/公建设计 (6).jpg", // 2020年 - 江苏双山岛灯塔民宿
+                        "images/公建设计 (7).jpg"
+                    ]
+                }
+            ];
+
+            const contactLinks = [
+                { name: '小红书', icon: 'book-heart', link: 'https://xhslink.com/m/5e2y1Ncgd6k', type: 'link', subText: '建筑师可乐', color: '#ff2442' },
+                { name: '抖音', icon: 'music', link: 'https://www.douyin.com/user/MS4wLjABAAAAK1WJ7uJJxALyxxEN3MGWKyGu184xrjwQ4dGp1kMVZ3M', type: 'link', subText: '建筑师可乐', color: '#1D1D1F' },
+                { name: 'B站', icon: 'tv', link: 'https://b23.tv/Gsv3F7l', type: 'link', subText: '建筑师可乐', color: '#fb7299' },
+                { name: '公众号', icon: 'message-circle', type: 'modal', qrCode: 'images/建行建远微信公众号.jpg', subText: '渐行建远AIGC', color: '#07c160' },
+                { name: '淘店', icon: 'shopping-bag', type: 'modal', qrCode: 'images/淘宝店二维码.png', subText: '原创教程：建行建远', color: '#ff5000' },
+                { name: '电子邮箱', icon: 'mail', value: 'v-luo@foxmail.com', type: 'copy', subText: 'v-luo@foxmail.com', color: '#00a1d6' }
+            ];
+
+            return (
+                <div className="min-h-screen bg-white text-[#1D1D1F] scroll-smooth overflow-x-hidden">
+                    {/* 导航栏 */}
+                    <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 backdrop-blur-xl shadow-sm border-b border-neutral-100 py-3' : 'bg-white border-b border-transparent py-5'}`}>
+                        <div className="max-w-[1400px] mx-auto px-8 md:px-16 flex justify-between items-center w-full">
+                            <motion.div 
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={springDampingTransition}
+                                className="text-2xl font-bold tracking-tight shrink-0 cursor-pointer"
+                                onClick={(e) => handleNavClick(e, 0)}
+                            >
+                                <span className="text-[#5D5FEF]">Kele</span>
+                                <span className="text-neutral-900">.Arch</span>
+                            </motion.div>
+                            
+                            <div className="hidden md:flex items-center space-x-12 text-[14px] font-semibold text-neutral-500">
+                                {['首页', '关于', '作品', '联系'].map((item, i) => (
+                                    <motion.a 
+                                        key={item}
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ ...springDampingTransition, delay: i * 0.05 }}
+                                        href={`#${['home','about','works','contact'][i]}`}
+                                        onClick={(e) => handleNavClick(e, i)}
+                                        className="hover:text-[#5D5FEF] transition-colors duration-300 relative group cursor-pointer"
+                                    >
+                                        {item}
+                                        <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-[#5D5FEF] transition-all duration-300 group-hover:w-full"></span>
+                                    </motion.a>
+                                ))}
+                            </div>
+
+                            <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                                <i data-lucide={isMenuOpen ? "x" : "menu"} className="w-6 h-6"></i>
+                            </button>
+                        </div>
+                    </nav>
+
+                    {/* Hero Section (首页板块) */}
+                    <section id="home" className="relative pt-32 pb-20 px-8 md:px-16 min-h-[90vh] flex items-center overflow-hidden">
+                        <div className="max-w-[1400px] mx-auto w-full flex flex-col lg:flex-row items-center justify-between gap-16">
+                            <motion.div 
+                                key={`home-text-${navKeys.home}`}
+                                className="flex-1 text-left z-10"
+                                variants={slowStaggerContainer}
+                                initial="hidden"
+                                animate="visible"
+                            >
+                                <motion.div variants={fadeUpSpringVariant} className="flex flex-wrap items-center gap-3 mb-8">
+                                    <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#EEF2FF] text-[#5D5FEF] text-[13px] font-bold shadow-sm border border-indigo-50">
+                                        👋 你好，我是建筑师可乐
+                                    </span>
+                                </motion.div>
+                                
+                                <motion.h1 variants={fadeUpSpringVariant} className="text-6xl md:text-[84px] font-[900] tracking-tight text-[#1D1D1F] leading-[1.05] mb-6">
+                                    AIGC + 设计
+                                </motion.h1>
+                                
+                                <motion.h2 variants={fadeUpSpringVariant} className="text-3xl md:text-[54px] font-[800] tracking-tight leading-[1.1] mb-10">
+                                    <span className="bg-gradient-text">空间与数字产品的美学实践</span>
+                                </motion.h2>
+                                
+                                <motion.p variants={fadeUpSpringVariant} className="max-w-2xl text-[17px] text-neutral-500 font-medium leading-[1.8] mb-12">
+                                    深耕设计行业 15 年的国家一级注册建筑师。具备“实体工程 + 数字化产品”双重落地经验，擅长用严谨的空间逻辑把控 AIGC 美学。
+                                </motion.p>
+                                
+                                <motion.div variants={fadeUpSpringVariant} className="flex flex-wrap gap-5">
+                                    <button 
+                                        onClick={(e) => handleNavClick(e, 2)}
+                                        className="group flex items-center justify-center gap-2 px-10 py-4 bg-[#5D5FEF] text-white rounded-2xl text-lg font-bold shadow-xl shadow-indigo-100 hover:shadow-indigo-200 transition-all duration-300 active:scale-95"
+                                    >
+                                        查看作品 
+                                        <i data-lucide="arrow-right" className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300"></i>
+                                    </button>
+                                    <button 
+                                        onClick={(e) => handleNavClick(e, 1)}
+                                        className="flex items-center justify-center px-10 py-4 bg-white border border-neutral-200 text-neutral-700 rounded-2xl text-lg font-bold hover:bg-neutral-50 hover:border-neutral-300 transition-all duration-300 shadow-sm"
+                                    >
+                                        了解更多
+                                    </button>
+                                </motion.div>
+                            </motion.div>
+
+                            {/* 头像 */}
+                            <motion.div 
+                                key={`home-img-${navKeys.home}`}
+                                className="relative flex-shrink-0"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ ...springDampingTransition, delay: 0.2 }}
+                            >
+                                <div className="absolute inset-[-100px] bg-blue-400/10 blur-[120px] rounded-full"></div>
+                                <motion.div 
+                                    className="relative w-72 h-72 md:w-[420px] md:h-[420px] rounded-full border-[12px] border-white shadow-[0_20px_50px_rgba(0,0,0,0.08)] overflow-hidden z-10 cursor-pointer"
+                                    whileHover={{ scale: 1.02 }}
+                                    transition={{ duration: 0.3, ease: "easeOut" }}
+                                >
+                                    <img src="images/3;4.jpg" alt="Architect Kele" className="w-full h-full object-cover object-top" />
+                                </motion.div>
+                            </motion.div>
+                        </div>
+                    </section>
+
+                    {/* 能力板块 (关于) */}
+                    <section id="about" className="py-32 bg-white px-8 md:px-16">
+                        <div className="max-w-[1400px] mx-auto">
+                            <motion.div 
+                                key={`about-head-${navKeys.about}`}
+                                className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-6"
+                                variants={fadeUpSpringVariant}
+                                initial="hidden"
+                                whileInView="visible"
+                                viewport={{ once: true, amount: 0.2 }}
+                            >
+                                <div className="max-w-3xl">
+                                    <h3 className="text-[#5D5FEF] font-bold tracking-[0.2em] text-sm mb-6 flex items-center gap-3">
+                                        <span className="w-8 h-[2px] bg-[#5D5FEF]"></span>CORE CAPABILITIES
+                                    </h3>
+                                    <h2 className="text-4xl md:text-5xl font-black text-[#1D1D1F] leading-tight">连接实体工程与数字美学的<br/>核心竞争力</h2>
+                                </div>
+                                <p className="text-neutral-400 text-lg font-medium md:max-w-xs leading-relaxed">跨越维度，从砖瓦到像素，始终坚持以逻辑驱动创意。</p>
+                            </motion.div>
+                            
+                            <motion.div 
+                                key={`about-grid-${navKeys.about}`}
+                                className="grid grid-cols-1 md:grid-cols-3 gap-8"
+                                variants={slowStaggerContainer}
+                                initial="hidden"
+                                whileInView="visible"
+                                viewport={{ once: true, amount: 0.1 }}
+                            >
+                                {capabilities.map((item, idx) => (
+                                    <motion.div 
+                                        key={idx} 
+                                        variants={fadeUpSpringVariant}
+                                        className="group bg-[#F8F9FF] p-10 rounded-[2.5rem] border border-transparent hover:border-indigo-100 hover:bg-white shadow-sm transition-all duration-300"
+                                    >
+                                        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-10 shadow-lg shadow-indigo-50 group-hover:bg-[#5D5FEF] group-hover:text-white transition-colors duration-300">
+                                            <i data-lucide={item.icon} className="w-8 h-8"></i>
+                                        </div>
+                                        <h4 className="text-2xl font-black mb-6 group-hover:text-[#5D5FEF] transition-colors duration-300">{item.title}</h4>
+                                        <p className="text-neutral-500 leading-relaxed font-medium">{item.desc}</p>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        </div>
+                    </section>
+
+                    {/* 作品板块 */}
+                    <section id="works" className="pt-20 pb-32 bg-[#F8F9FA] px-8 md:px-16">
+                        <div className="max-w-[1400px] mx-auto">
+                            <motion.div 
+                                key={`works-head-${navKeys.works}`}
+                                className="mb-12 text-center flex flex-col items-center justify-center" 
+                                variants={textBlindsContainer}
+                                initial="hidden"
+                                whileInView="visible"
+                                viewport={{ once: true, amount: 0.2 }}
+                            >
+                                <div className="relative inline-block px-2">
+                                    <motion.h2 
+                                        className="flex justify-center text-[3.2rem] sm:text-[5.6rem] md:text-[7.6rem] font-[900] text-black/30 leading-none tracking-tighter uppercase cursor-default origin-center transition-colors duration-300 hover:text-[#5D5FEF]"
+                                        whileHover={{ scale: 1.03 }}
+                                        style={{ perspective: 1000 }}
+                                    >
+                                        {"PROJECTS".split("").map((char, index) => (
+                                            <motion.span 
+                                                key={index} 
+                                                variants={textBlindsChild}
+                                                style={{ display: "inline-block", transformOrigin: "bottom" }}
+                                            >
+                                                {char}
+                                            </motion.span>
+                                        ))}
+                                    </motion.h2>
+                                </div>
+                                <motion.p 
+                                    variants={textBlindsChild} 
+                                    className="mt-4 md:mt-6 text-[16px] md:text-[20px] text-neutral-500 font-light tracking-[0.3em] text-center ml-[0.3em]"
+                                >
+                                    可乐作品案例展示
+                                </motion.p>
+                            </motion.div>
+                            
+                            <motion.div 
+                                key={`works-grid-${navKeys.works}`}
+                                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+                                variants={slowStaggerContainer}
+                                initial="hidden"
+                                whileInView="visible"
+                                viewport={{ once: true, amount: 0.1 }}
+                            >
+                                {projects.map((p, idx) => (
+                                    <motion.div 
+                                        key={p.id} 
+                                        variants={fadeUpSpringVariant}
+                                        onClick={() => {
+                                            if(p.detailImages && p.detailImages.length > 0) {
+                                                setActiveProject(p);
+                                            }
+                                        }}
+                                        className="group cursor-pointer bg-white rounded-[1.5rem] overflow-hidden shadow-sm hover:shadow-[0_15px_40px_rgba(0,0,0,0.18)] hover:-translate-y-1 transition-all duration-300 border border-neutral-100 flex flex-col"
+                                    >
+                                        <div className="w-full aspect-[4/3] bg-neutral-100 overflow-hidden relative">
+                                            <img 
+                                                src={p.image} 
+                                                className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110" 
+                                                alt={p.title} 
+                                            />
+                                        </div>
+                                        <div className="p-6 flex flex-col flex-1 relative bg-white z-10">
+                                            <h4 className="text-[18px] font-black text-neutral-900 mb-2 group-hover:text-[#5D5FEF] transition-colors duration-300">{p.title}</h4>
+                                            <p className="text-[13px] text-neutral-500 leading-relaxed mb-4 line-clamp-2">{p.description}</p>
+                                            
+                                            <div className="flex flex-nowrap gap-2 mt-auto overflow-hidden">
+                                                {p.tags.map((tag, idx_t) => (
+                                                    <span key={idx_t} className="shrink-0 px-3 py-1 bg-neutral-100 text-neutral-600 text-[10px] rounded-full font-bold uppercase tracking-wider">{tag}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        </div>
+                    </section>
+
+                    {/* 联系方式板块 */}
+                    <section id="contact" className="py-32 bg-white px-8 md:px-16 relative overflow-hidden">
+                        <div className="max-w-[1200px] mx-auto text-center">
+                            <motion.div 
+                                key={`contact-head-${navKeys.contact}`}
+                                className="mb-16 text-center flex flex-col items-center justify-center" 
+                                variants={textBlindsContainer}
+                                initial="hidden"
+                                whileInView="visible"
+                                viewport={{ once: true, amount: 0.2 }}
+                            >
+                                <div className="relative inline-block px-2">
+                                    <motion.h2 
+                                        className="flex justify-center text-[3.2rem] sm:text-[5.6rem] md:text-[7.6rem] font-[900] text-black/30 leading-none tracking-tighter uppercase cursor-default origin-center transition-colors duration-300 hover:text-[#5D5FEF]"
+                                        whileHover={{ scale: 1.03 }}
+                                        style={{ perspective: 1000 }}
+                                    >
+                                        {"CONTACT".split("").map((char, index) => (
+                                            <motion.span 
+                                                key={index} 
+                                                variants={textBlindsChild}
+                                                style={{ display: "inline-block", transformOrigin: "bottom" }}
+                                            >
+                                                {char}
+                                            </motion.span>
+                                        ))}
+                                    </motion.h2>
+                                </div>
+                                <motion.p 
+                                    variants={textBlindsChild} 
+                                    className="mt-4 md:mt-6 text-[15px] md:text-[18px] text-neutral-500 font-light tracking-[0.1em] text-center px-4"
+                                >
+                                    欢迎随时与我交流项目合作、设计想法或其他任何问题
+                                </motion.p>
+                            </motion.div>
+                            
+                            <motion.div 
+                                key={`contact-grid-${navKeys.contact}`}
+                                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6"
+                                variants={slowStaggerContainer}
+                                initial="hidden"
+                                whileInView="visible"
+                                viewport={{ once: true, amount: 0.1 }}
+                            >
+                                {contactLinks.map((contact, idx) => {
+                                    const cardContent = (
+                                        <motion.div 
+                                            variants={fadeUpSpringVariant}
+                                            className="group relative bg-white rounded-[1.5rem] p-5 md:p-6 flex items-center justify-between border-[1.5px] border-neutral-100 hover:border-transparent hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] hover:-translate-y-1.5 hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 cursor-pointer overflow-hidden z-10"
+                                        >
+                                            {/* 悬停时的底层微光（从右侧发散） */}
+                                            <div 
+                                                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0"
+                                                style={{ background: `radial-gradient(circle at center right, ${contact.color}15, transparent 70%)` }}
+                                            />
+                                            
+                                            {/* 图标背后的高强度动态高斯模糊辉光 (呼吸灯感) */}
+                                            <div 
+                                                className="absolute top-1/2 left-6 -translate-y-1/2 w-14 h-14 rounded-full blur-2xl opacity-0 group-hover:opacity-60 transition-opacity duration-500 z-0 pointer-events-none"
+                                                style={{ backgroundColor: contact.color }}
+                                            />
+                                            
+                                            <div className="flex items-center gap-4 md:gap-5 relative z-10">
+                                                {/* 实体图标块 */}
+                                                <div 
+                                                    className="w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-2xl flex items-center justify-center transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-6 shadow-sm"
+                                                    style={{ backgroundColor: contact.color, color: 'white' }}
+                                                >
+                                                    <i data-lucide={contact.icon} className="w-6 h-6 md:w-7 md:h-7" strokeWidth="2.5"></i>
+                                                </div>
+                                                
+                                                {/* 粗体字及副标题放图标右侧 */}
+                                                <div className="flex flex-col text-left">
+                                                    <span className="font-black text-[#1D1D1F] text-[17px] md:text-[19px] mb-0.5 group-hover:text-[#5D5FEF] transition-colors">{contact.name}</span>
+                                                    <span className="text-[12px] md:text-[13px] text-neutral-500 font-medium tracking-wide truncate max-w-[120px] sm:max-w-[150px]">
+                                                        {contact.subText}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* 右侧跳转小箭头 */}
+                                            <div className="relative z-10 shrink-0 w-8 h-8 md:w-9 md:h-9 rounded-full bg-neutral-50 border border-neutral-200 flex items-center justify-center group-hover:bg-[#1D1D1F] group-hover:scale-110 group-hover:border-transparent transition-all duration-300">
+                                                <i data-lucide="arrow-up-right" className="w-3.5 h-3.5 text-neutral-400 group-hover:text-white transition-colors" strokeWidth="2.5"></i>
+                                            </div>
+                                        </motion.div>
+                                    );
+
+                                    if (contact.type === 'link') {
+                                        return <a key={idx} href={contact.link} target="_blank" rel="noopener noreferrer" className="block h-full outline-none">{cardContent}</a>;
+                                    } else if (contact.type === 'copy') {
+                                        return <button key={idx} onClick={() => handleCopy(contact.value)} className="block w-full h-full text-left outline-none">{cardContent}</button>;
+                                    } else {
+                                        return <button key={idx} onClick={() => setQrModal({ isOpen: true, title: contact.name, imgUrl: contact.qrCode })} className="block w-full h-full text-left outline-none">{cardContent}</button>;
+                                    }
+                                })}
+                            </motion.div>
+                        </div>
+
+                        {/* 复制提示 Toast */}
+                        <AnimatePresence>
+                            {toastMsg && (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 50, x: "-50%" }}
+                                    animate={{ opacity: 1, y: 0, x: "-50%" }}
+                                    exit={{ opacity: 0, y: 20, x: "-50%" }}
+                                    transition={springDampingTransition}
+                                    className="fixed bottom-12 left-1/2 px-8 py-4 bg-[#1D1D1F] text-white text-[14px] font-bold rounded-2xl shadow-2xl z-[110] flex items-center gap-3"
+                                >
+                                    <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                                        <i data-lucide="check" className="w-3 h-3 text-white"></i>
+                                    </div>
+                                    {toastMsg}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </section>
+
+                    {/* 作品详情页 (修复对齐问题) */}
+                    <AnimatePresence>
+                        {activeProject && (
+                            <motion.div 
+                                initial={{ opacity: 0, y: "100%" }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: "100%" }}
+                                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                                className="fixed inset-0 bg-[#F8F9FA] z-[120] overflow-y-auto"
+                            >
+                                <div className="bg-white border-b border-neutral-100">
+                                    <div className="max-w-[1200px] mx-auto pt-12 md:pt-20 pb-12 px-6 md:px-16">
+                                        <button 
+                                            onClick={() => setActiveProject(null)} 
+                                            className="inline-flex items-center gap-2 text-[14px] text-neutral-500 hover:text-[#1D1D1F] transition-colors font-medium mb-10"
+                                        >
+                                            <i data-lucide="arrow-left" className="w-4 h-4"></i> 返回作品集
+                                        </button>
+                                        <h1 className="text-3xl md:text-4xl lg:text-[42px] font-black text-[#1D1D1F] mb-6 tracking-tight">
+                                            {activeProject.title}
+                                        </h1>
+                                        <p className="text-[15px] md:text-[17px] text-neutral-500 leading-relaxed max-w-4xl">
+                                            {activeProject.fullDescription || activeProject.description}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* 长图内容区 */}
+                                <div className="max-w-[1200px] mx-auto py-12 md:py-16 px-6 md:px-16 flex flex-col gap-10 md:gap-16 pb-32">
+                                    {activeProject.detailImages.map((imgUrl, idx) => (
+                                        <motion.div
+                                            key={idx}
+                                            initial={{ opacity: 0, y: 40 }}
+                                            whileInView={{ opacity: 1, y: 0 }}
+                                            viewport={{ once: true, margin: "-100px" }}
+                                            transition={{ duration: 0.6, ease: "easeOut" }}
+                                            className="w-full bg-white rounded-2xl md:rounded-[1.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.06)] overflow-hidden border border-neutral-100"
+                                        >
+                                            <img 
+                                                src={imgUrl} 
+                                                alt={`${activeProject.title} 展示图 ${idx + 1}`} 
+                                                className="w-full h-auto block"
+                                            />
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* QR Code 弹窗 */}
+                    <AnimatePresence>
+                        {qrModal.isOpen && (
+                            <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center backdrop-blur-sm p-6" 
+                                onClick={() => setQrModal({isOpen: false, title: '', imgUrl: ''})}
+                            >
+                                <motion.div 
+                                    initial={{ scale: 0.95, opacity: 0, y: 15 }}
+                                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                                    exit={{ scale: 0.95, opacity: 0, y: 15 }}
+                                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                                    className="bg-white rounded-[3rem] p-10 max-w-sm w-full relative shadow-2xl" 
+                                    onClick={e => e.stopPropagation()}
+                                >
+                                    <button className="absolute top-8 right-8 text-neutral-300 hover:text-[#1D1D1F] transition-colors" onClick={() => setQrModal({isOpen: false, title: '', imgUrl: ''})}>
+                                        <i data-lucide="x" className="w-6 h-6"></i>
+                                    </button>
+                                    <h3 className="text-2xl font-black text-center mb-10 text-[#1D1D1F]">我的{qrModal.title}</h3>
+                                    <div className="bg-neutral-50 rounded-[2.5rem] p-6 border border-neutral-100 mb-8 aspect-square flex items-center justify-center overflow-hidden shadow-inner">
+                                        <img src={qrModal.imgUrl} alt={qrModal.title} className="w-full h-full object-contain mix-blend-multiply" />
+                                    </div>
+                                    <p className="text-center text-[13px] font-bold text-neutral-400 px-4 leading-relaxed">
+                                        请打开手机 App 扫码关注<br/>获取更多专业教程与资讯更新
+                                    </p>
+                                </motion.div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <footer className="py-24 border-t border-neutral-100 px-8 bg-white">
+                        <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-center gap-8 w-full text-center md:text-left">
+                            <div className="text-2xl font-bold"><span className="text-[#5D5FEF]">Kele</span>.Arch</div>
+                            <p className="text-neutral-400 text-sm font-medium italic">“跨界融合，让实体工程与数字体验在逻辑与美学的交点处相遇。”</p>
+                            <div className="flex gap-8 text-sm font-bold text-neutral-600 uppercase tracking-widest justify-center">
+                                <a href="#" className="hover:text-[#5D5FEF] transition-colors duration-300">WeChat</a>
+                                <a href="#" className="hover:text-[#5D5FEF] transition-colors duration-300">小红书</a>
+                                <a href="#" className="hover:text-[#5D5FEF] transition-colors duration-300">Behance</a>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
