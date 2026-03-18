@@ -190,17 +190,22 @@
                 { 
                     id: 2, 
                     title: "AIGC+建筑空间美学", 
-                    image: "images/AI+建筑封面图.jpg", 
+                    image: "images/AI+建筑封面图.png", // 已将后缀修改为.png，与你文件夹中保持一致
                     description: "基于Stable Diffusion 及 Nanobanana 工作流的建筑空间生成。", 
                     fullDescription: "探索AI辅助建筑设计的前沿边界。本系列作品主要展示基于 Stable Diffusion 结合 Nanobanana 创新工作流的建筑空间概念生成。旨在突破传统设计的灵感瓶颈，实现从文本语言到高品质建筑可视化展板的快速转化。",
                     tags: ["SD", "Nanobanana"],
                     customContent: true, 
                     subCategory: "Nanobanana+建筑展板设计",
+                    // 【全新优化机制】：采用 thumb(缩略图) 与 full(高清原图) 双轨加载机制，极大优化手机端加载速度
                     gridImages: [
-                        "images/AI建筑案例1-01.jpg",
-                        "images/AI建筑案例1-02.jpg",
-                        "images/AI建筑案例1-03.jpg",
-                        "images/AI建筑案例1-04.jpg"
+                        { thumb: "images/AI建筑案例1-01_thumb.jpg", full: "images/AI建筑案例1-01.jpg" },
+                        { thumb: "images/AI建筑案例1-02_thumb.jpg", full: "images/AI建筑案例1-02.jpg" },
+                        { thumb: "images/AI建筑案例1-03_thumb.jpg", full: "images/AI建筑案例1-03.jpg" },
+                        { thumb: "images/AI建筑案例1-04_thumb.jpg", full: "images/AI建筑案例1-04.jpg" },
+                        { thumb: "images/AI建筑案例2-01_thumb.jpg", full: "images/AI建筑案例2-01.jpg" },
+                        { thumb: "images/AI建筑案例2-02_thumb.png", full: "images/AI建筑案例2-02.png" },
+                        { thumb: "images/AI建筑案例2-03_thumb.jpg", full: "images/AI建筑案例2-03.jpg" },
+                        { thumb: "images/AI建筑案例2-04_thumb.jpg", full: "images/AI建筑案例2-04.jpg" }
                     ]
                 },
                 { id: 3, title: "AIGC 视觉生成", image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600", description: "融合 16 年原创教程开发经验，将专业技术拆解为零基础可上手的 SOP 路径。", tags: ["知识产品化", "视觉生成", "AI 艺术"] },
@@ -560,6 +565,7 @@
                                                 src={p.image} 
                                                 className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110" 
                                                 alt={p.title} 
+                                                loading="lazy" /* 增加原生懒加载机制 */
                                                 onError={(e) => handleImageError(e, '800x600')}
                                             />
                                         </div>
@@ -719,7 +725,6 @@
                                 {/* 滚动内容区域 */}
                                 <div className="absolute inset-0 overflow-y-auto no-scrollbar z-10">
                                     <div className="bg-white border-b border-neutral-100">
-                                        {/* 【优化点1】: 扩大了头部文字容器的最大宽度 1400px，缩减左右留白为 px-4 md:px-8 */}
                                         <div className="max-w-[1400px] mx-auto pt-12 md:pt-20 pb-10 px-4 md:px-8">
                                             <button 
                                                 onClick={() => setActiveProject(null)} 
@@ -736,7 +741,6 @@
                                         </div>
                                     </div>
 
-                                    {/* 【优化点1】: 长图/网格内容区最大宽度扩至 1400px，缩减 padding */}
                                     <div className="max-w-[1400px] mx-auto py-10 md:py-12 px-4 md:px-8 flex flex-col gap-6 md:gap-10 pb-32">
                                         
                                         {activeProject.customContent ? (
@@ -744,25 +748,31 @@
                                                 <div className="pb-3 border-b-2 border-neutral-100">
                                                     <h3 className="text-xl md:text-2xl font-black text-[#1D1D1F] border-l-[5px] border-[#5D5FEF] pl-4 leading-tight">{activeProject.subCategory}</h3>
                                                 </div>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mt-2">
-                                                    {activeProject.gridImages.map((imgUrl, idx) => (
-                                                        <motion.div
-                                                            key={idx}
-                                                            whileHover={{ scale: 1.02, y: -5 }}
-                                                            className="cursor-zoom-in rounded-[1rem] overflow-hidden shadow-sm hover:shadow-[0_20px_40px_rgba(0,0,0,0.15)] border border-neutral-100 bg-white transition-all duration-300 relative group"
-                                                            onClick={() => setLightboxImg(imgUrl)}
-                                                        >
-                                                            {/* 【优化点2】: 去除了图片下方的“查看大图”文字和放大镜栏，呈现极致干净的纯画廊 */}
-                                                            <img 
-                                                                src={imgUrl} 
-                                                                alt={`展板设计 ${idx + 1}`} 
-                                                                className="w-full h-auto block object-cover"
-                                                                onError={(e) => handleImageError(e, '800x1200')}
-                                                            />
-                                                            {/* 悬浮时微弱的遮罩交互提示，替代了底部文字 */}
-                                                            <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                                                        </motion.div>
-                                                    ))}
+                                                {/* 【全新优化机制】：将手机端的单排显示改为了双列 (grid-cols-2) */}
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mt-2">
+                                                    {activeProject.gridImages.map((imgItem, idx) => {
+                                                        // 兼容双轨制处理：网格读缩略图，放大读原图
+                                                        const thumbUrl = imgItem.thumb || imgItem;
+                                                        const fullUrl = imgItem.full || imgItem;
+                                                        
+                                                        return (
+                                                            <motion.div
+                                                                key={idx}
+                                                                whileHover={{ scale: 1.02, y: -5 }}
+                                                                className="cursor-zoom-in rounded-lg md:rounded-[1rem] overflow-hidden shadow-sm hover:shadow-[0_20px_40px_rgba(0,0,0,0.15)] border border-neutral-100 bg-white transition-all duration-300 relative group"
+                                                                onClick={() => setLightboxImg(fullUrl)}
+                                                            >
+                                                                <img 
+                                                                    src={thumbUrl} 
+                                                                    alt={`展板设计 ${idx + 1}`} 
+                                                                    className="w-full h-auto block object-cover aspect-[3/4]"
+                                                                    loading="lazy" /* 增加原生懒加载机制 */
+                                                                    onError={(e) => handleImageError(e, '400x600')}
+                                                                />
+                                                                <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                                                            </motion.div>
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
                                         ) : (
@@ -780,6 +790,7 @@
                                                         src={imgUrl} 
                                                         alt={`${activeProject.title} 展示图 ${idx + 1}`} 
                                                         className="w-full h-auto block"
+                                                        loading="lazy"
                                                         onError={(e) => handleImageError(e, '1400x900')}
                                                     />
                                                 </motion.div>
@@ -802,9 +813,8 @@
                                 transition={{ duration: 0.25 }}
                                 className="fixed inset-0 bg-[#0f0f11]/95 backdrop-blur-md z-[200] flex items-center justify-center overflow-hidden"
                                 onClick={() => setLightboxImg(null)}
-                                onWheel={handleWheelZoom} /* 【优化点3】: 绑定鼠标滚轮缩放事件 */
+                                onWheel={handleWheelZoom}
                             >
-                                {/* 提示文字：支持滚轮缩放 */}
                                 <div className="absolute top-6 left-1/2 -translate-x-1/2 text-white/50 text-sm font-medium tracking-widest pointer-events-none z-50 bg-black/30 px-4 py-2 rounded-full backdrop-blur-sm flex items-center gap-2">
                                     <i data-lucide="mouse" className="w-4 h-4"></i> 滚轮缩放 / 拖拽查看
                                 </div>
@@ -816,13 +826,12 @@
                                     <i data-lucide="x" className="w-6 h-6"></i>
                                 </button>
                                 
-                                {/* 内部的拖拽容器，点击不关闭灯箱 */}
                                 <motion.div 
                                     className="relative w-full h-full flex items-center justify-center"
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     <motion.img 
-                                        drag={lightboxScale > 1} /* 【优化点3】: 放大时支持自由拖拽平移 */
+                                        drag={lightboxScale > 1}
                                         dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
                                         dragElastic={0.1}
                                         initial={{ scale: 0.9, opacity: 0 }}
@@ -834,7 +843,6 @@
                                         className={`max-w-[95vw] max-h-[95vh] object-contain shadow-[0_20px_60px_rgba(0,0,0,0.5)] rounded-md pointer-events-auto ${lightboxScale > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
                                         onError={(e) => handleImageError(e, '1200x1200')}
                                         onClick={(e) => {
-                                            // 点击图片如果还没放大，就默认放大到 2倍
                                             if (lightboxScale <= 1) setLightboxScale(2);
                                         }}
                                     />
