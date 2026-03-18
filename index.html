@@ -101,7 +101,7 @@
                                                 : {}
                                     }
                                     transition={{ type: "spring", stiffness: 250, damping: 25, mass: 0.8 }}
-                                    className={`absolute w-[70%] md:w-[50%] lg:w-[38%] aspect-[1/1.414] rounded-3xl md:rounded-[2.5rem] overflow-hidden cursor-pointer ${isCenter ? 'ring-[6px] md:ring-[8px] ring-white/90' : ''}`}
+                                    className={`absolute w-[70%] md:w-[50%] lg:w-[38%] aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer ${isCenter ? 'ring-[6px] md:ring-[8px] ring-white/90' : ''}`}
                                     onClick={() => {
                                         if (isCenter) onImageClick(fullUrl);
                                         else if (variant === 'left') prevSlide();
@@ -124,7 +124,7 @@
                                             const parts = (thumbUrl).split('/');
                                             const text = decodeURIComponent(parts[parts.length - 1]); 
                                             e.target.onerror = null; 
-                                            e.target.src = `https://placehold.co/600x850/EEF2FF/5D5FEF?text=${encodeURIComponent(text)}`;
+                                            e.target.src = `https://placehold.co/600x800/EEF2FF/5D5FEF?text=${encodeURIComponent(text)}`;
                                         }} 
                                     />
                                     {isCenter && (
