@@ -64,23 +64,23 @@
                 return 'hidden'; 
             };
 
-            // 核心动画状态机：定义中间大，两边小的 3D 效果
+            // 【核心排版微调】：
+            // 1. 加大两侧图片透明度（opacity降至0.5，亮度80%），使其更具通透感。
+            // 2. 将左右位移拉开到 ±85%，让两侧的图片展示出更多内容，减少被中心主图遮挡的区域。
             const variants = {
-                center: { x: "0%", scale: 1, zIndex: 10, opacity: 1, filter: "brightness(100%)" },
-                // 放大偏移量(x)至80%与缩放比例(scale)，让两边留白减少，副图更向边缘撑开
-                left: { x: "-80%", scale: 0.85, zIndex: 5, opacity: 0.6, filter: "brightness(60%)" },
-                right: { x: "80%", scale: 0.85, zIndex: 5, opacity: 0.6, filter: "brightness(60%)" },
-                hidden: { x: "0%", scale: 0.5, zIndex: 0, opacity: 0, transition: { duration: 0.2 } }
+                center: { x: "0%", scale: 1, zIndex: 10, opacity: 1, filter: "brightness(100%)", boxShadow: "0 30px 60px -12px rgba(0,0,0,0.3)" },
+                left: { x: "-85%", scale: 0.85, zIndex: 5, opacity: 0.5, filter: "brightness(80%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
+                right: { x: "85%", scale: 0.85, zIndex: 5, opacity: 0.5, filter: "brightness(80%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
+                hidden: { x: "0%", scale: 0.5, zIndex: 0, opacity: 0, transition: { duration: 0.2 }, boxShadow: "0 0px 0px rgba(0,0,0,0)" }
             };
 
             return (
-                // 移除了 bg-neutral-50/50, rounded-[2.5rem], shadow-inner 从而去除外侧底色与边框
-                <div className="relative w-full h-[60vh] md:h-[85vh] flex flex-col items-center justify-center overflow-hidden py-4 mt-2">
-                    {/* 放宽容器宽度至 1400px，让两侧图片有更多向外扩张的空间 */}
+                <div className="relative w-full h-[60vh] md:h-[85vh] flex flex-col items-center justify-center py-4 mt-2">
                     <div className="relative w-full max-w-[1400px] h-full flex items-center justify-center">
                         {items.map((item, idx) => {
                             const variant = getVariant(idx);
                             const isCenter = variant === 'center';
+                            const isSide = variant === 'left' || variant === 'right';
                             const thumbUrl = item.thumb || item;
                             const fullUrl = item.full || item;
 
@@ -90,9 +90,23 @@
                                     variants={variants}
                                     initial={false}
                                     animate={variant}
+                                    // 鼠标放在半透明的副图上时，瞬间恢复100%清晰度并往外探出(±92%)，诱发点击
+                                    whileHover={
+                                        isCenter 
+                                            ? { scale: 1.02 } 
+                                            : isSide 
+                                                ? { 
+                                                    scale: 0.88, 
+                                                    x: variant === 'left' ? "-92%" : "92%", 
+                                                    opacity: 0.95, 
+                                                    filter: "brightness(100%)", 
+                                                    boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)" 
+                                                  } 
+                                                : {}
+                                    }
                                     transition={{ type: "spring", stiffness: 250, damping: 25, mass: 0.8 }}
-                                    // 加大了卡片本身的宽度比例 (lg:w-[42%]) 让主图明显变大
-                                    className={`absolute w-[70%] md:w-[50%] lg:w-[42%] aspect-[1/1.414] rounded-2xl md:rounded-[2rem] shadow-[0_25px_60px_rgba(0,0,0,0.15)] overflow-hidden cursor-pointer ${isCenter ? 'ring-[6px] md:ring-[8px] ring-white/90' : ''}`}
+                                    // 【主图收缩】：将基准宽度从 45% 缩小到 38%，使得画幅更加精致且主次明确
+                                    className={`absolute w-[70%] md:w-[50%] lg:w-[38%] aspect-[1/1.414] rounded-3xl md:rounded-[2.5rem] overflow-hidden cursor-pointer ${isCenter ? 'ring-[6px] md:ring-[8px] ring-white/90' : ''}`}
                                     onClick={() => {
                                         if (isCenter) onImageClick(fullUrl);
                                         else if (variant === 'left') prevSlide();
@@ -130,11 +144,11 @@
                         })}
                     </div>
                     
-                    {/* 悬浮左右控制按钮 - 升级为高斯模糊的高透玻璃拟态，降低视觉阻碍感 */}
-                    <button onClick={prevSlide} className="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/20 backdrop-blur-lg border border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.1)] flex items-center justify-center text-neutral-800 hover:bg-white/40 hover:scale-110 transition-all z-20">
+                    {/* 悬浮左右控制按钮 */}
+                    <button onClick={prevSlide} className="absolute left-4 md:left-10 lg:left-16 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 opacity-30 hover:opacity-100 shadow-sm flex items-center justify-center text-neutral-600 hover:text-black hover:bg-white/60 hover:shadow-[0_8px_32px_rgba(0,0,0,0.15)] hover:scale-110 transition-all duration-300 z-20">
                         <i data-lucide="chevron-left" className="w-5 h-5 md:w-6 md:h-6"></i>
                     </button>
-                    <button onClick={nextSlide} className="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/20 backdrop-blur-lg border border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.1)] flex items-center justify-center text-neutral-800 hover:bg-white/40 hover:scale-110 transition-all z-20">
+                    <button onClick={nextSlide} className="absolute right-4 md:right-10 lg:right-16 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 opacity-30 hover:opacity-100 shadow-sm flex items-center justify-center text-neutral-600 hover:text-black hover:bg-white/60 hover:shadow-[0_8px_32px_rgba(0,0,0,0.15)] hover:scale-110 transition-all duration-300 z-20">
                         <i data-lucide="chevron-right" className="w-5 h-5 md:w-6 md:h-6"></i>
                     </button>
 
@@ -289,7 +303,7 @@
                 { 
                     id: 2, 
                     title: "AIGC+建筑空间美学", 
-                    image: "images/AI+建筑封面图.jpg", // 已恢复为你指定的 jpg 格式封面图
+                    image: "images/AI+建筑封面图.jpg", 
                     description: "基于Stable Diffusion 及 Nanobanana 工作流的建筑空间生成。", 
                     fullDescription: "探索AI辅助建筑设计的前沿边界。本系列作品主要展示基于 Stable Diffusion 结合 Nanobanana 创新工作流的建筑空间概念生成。旨在突破传统设计的灵感瓶颈，实现从文本语言到高品质建筑可视化展板的快速转化。",
                     tags: ["SD", "Nanobanana"],
@@ -820,8 +834,8 @@
                                     返回作品集
                                 </button>
 
-                                {/* 滚动内容区域 */}
-                                <div className="absolute inset-0 overflow-y-auto no-scrollbar z-10">
+                                {/* 滚动内容区域: 注意加了 overflow-x-hidden 防止内部出现横向滚动条 */}
+                                <div className="absolute inset-0 overflow-y-auto overflow-x-hidden no-scrollbar z-10">
                                     <div className="bg-white border-b border-neutral-100">
                                         <div className="max-w-[1400px] mx-auto pt-12 md:pt-20 pb-10 px-4 md:px-8">
                                             <button 
