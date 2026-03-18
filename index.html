@@ -51,6 +51,7 @@
         // ================= 3D 卡片轮播组件 =================
         const GallerySlider = ({ items, onImageClick }) => {
             const [currentIndex, setCurrentIndex] = useState(0);
+            const [hoveredCard, setHoveredCard] = useState(null); // 新增：用于追踪当前悬停卡片的状态
 
             const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % items.length);
             const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
@@ -87,6 +88,8 @@
                                     variants={variants}
                                     initial={false}
                                     animate={variant}
+                                    onHoverStart={() => setHoveredCard(idx)} // 鼠标移入时记录卡片索引
+                                    onHoverEnd={() => setHoveredCard(null)}  // 鼠标移出时清除记录
                                     whileHover={
                                         isCenter 
                                             ? { scale: 1.02 } 
@@ -127,13 +130,24 @@
                                             e.target.src = `https://placehold.co/600x800/EEF2FF/5D5FEF?text=${encodeURIComponent(text)}`;
                                         }} 
                                     />
-                                    {isCenter && (
-                                        <div className="absolute inset-0 bg-black/0 hover:bg-black/15 transition-colors duration-300 flex items-center justify-center opacity-0 hover:opacity-100">
-                                            <div className="w-14 h-14 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center text-white shadow-lg">
-                                                <i data-lucide="zoom-in" className="w-6 h-6"></i>
-                                            </div>
-                                        </div>
-                                    )}
+
+                                    {/* 悬停自动播放视频层：仅当存在视频、卡片位于中间且鼠标悬停时触发 */}
+                                    <AnimatePresence>
+                                        {item.video && isCenter && hoveredCard === idx && (
+                                            <motion.video 
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                src={item.video}
+                                                autoPlay
+                                                loop
+                                                muted
+                                                playsInline
+                                                className="absolute inset-0 w-full h-full object-cover z-10 pointer-events-none"
+                                            />
+                                        )}
+                                    </AnimatePresence>
                                 </motion.div>
                             );
                         })}
@@ -333,7 +347,60 @@
                         }
                     ]
                 },
-                { id: 3, title: "AIGC 视觉生成", image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600", description: "融合 16 年原创教程开发经验，将专业技术拆解为零基础可上手的 SOP 路径。", tags: ["知识产品化", "视觉生成", "AI 艺术"] },
+                { 
+                    id: 3, 
+                    title: "AIGC 视觉生成", 
+                    image: "images/艺术照 (1).jpg", 
+                    description: "多元视觉场景，将专业技术拆解为零基础可上手的 SOP 路径。", 
+                    fullDescription: "多元视觉场景，将专业技术拆解为零基础可上手的 SOP 路径。探索 AI 技术在人像摄影与艺术视觉领域的深度应用，通过高度可控的 Nanobanana 工作流实现商业级的高品质出图。",
+                    tags: ["知识产品化", "视觉生成", "AI 艺术"],
+                    customContent: true, 
+                    sections: [
+                        {
+                            title: "Nanobanana+艺术照片",
+                            images: [
+                                { thumb: "images/艺术照 (1)_thumb.jpg", full: "images/艺术照 (1).jpg" },
+                                { thumb: "images/艺术照 (2)_thumb.jpg", full: "images/艺术照 (2).jpg" },
+                                { thumb: "images/艺术照 (3)_thumb.jpg", full: "images/艺术照 (3).jpg" },
+                                { thumb: "images/艺术照 (4)_thumb.jpg", full: "images/艺术照 (4).jpg" },
+                                { thumb: "images/艺术照 (5)_thumb.jpg", full: "images/艺术照 (5).jpg" }
+                            ]
+                        },
+                        {
+                            title: "Nanobanana+人物手办",
+                            images: [
+                                { thumb: "images/手办 (1)_thumb.jpg", full: "images/手办 (1).jpg" },
+                                { thumb: "images/手办 (2)_thumb.jpg", full: "images/手办 (2).jpg" },
+                                { thumb: "images/手办 (3)_thumb.jpg", full: "images/手办 (3).jpg" },
+                                { thumb: "images/手办 (4)_thumb.jpg", full: "images/手办 (4).jpg" },
+                                { thumb: "images/手办 (5)_thumb.jpg", full: "images/手办 (5).jpg" },
+                                { thumb: "images/手办 (6)_thumb.jpg", full: "images/手办 (6).jpg" }
+                            ]
+                        },
+                        {
+                            title: "Nanobanana+创意艺术",
+                            images: [
+                                { thumb: "images/创意艺术 (4)_thumb.jpg", full: "images/创意艺术 (4).jpg", video: "images/创意艺术 (4).mp4" },
+                                // 修复 Bug：精准匹配你本地多出一个空格的图片文件名，并兼容 mp4 视频
+                                { thumb: "images/创意艺术 (9) .jpg", full: "images/创意艺术 (9) .jpg", video: "images/创意艺术 (9).mp4" },
+                                { thumb: "images/创意艺术 (3)_thumb.jpg", full: "images/创意艺术 (3).jpg", video: "images/创意艺术 (3).mp4" },
+                                { thumb: "images/创意艺术 (5)_thumb.jpg", full: "images/创意艺术 (5).jpg", video: "images/创意艺术 (5).mp4" },
+                                { thumb: "images/创意艺术 (6)_thumb.jpg", full: "images/创意艺术 (6).jpg", video: "images/创意艺术 (6).mp4" },
+                                { thumb: "images/创意艺术 (8)_thumb.jpg", full: "images/创意艺术 (8).jpg" }
+                            ]
+                        },
+                        {
+                            title: "Nanobanana+节日海报",
+                            images: [
+                                { thumb: "images/节日海报 (1)_thumb.jpg", full: "images/节日海报 (1).jpg" },
+                                { thumb: "images/节日海报 (2)_thumb.jpg", full: "images/节日海报 (2).jpg" },
+                                { thumb: "images/节日海报 (3)_thumb.jpg", full: "images/节日海报 (3).jpg" },
+                                { thumb: "images/节日海报 (4)_thumb.jpg", full: "images/节日海报 (4).jpg" },
+                                { thumb: "images/节日海报 (5)_thumb.jpg", full: "images/节日海报 (5).jpg" }
+                            ]
+                        }
+                    ]
+                },
                 { id: 4, title: "AIGC 动态影像", image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=600", description: "探索 AI 技术在动态影像领域的应用，打造高品质的视觉内容与运动图形。", tags: ["动态影像", "视频制作", "运动图形"] },
                 { 
                     id: 1, 
