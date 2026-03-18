@@ -48,6 +48,107 @@
         const { useState, useEffect } = React;
         const { motion, AnimatePresence } = window.Motion;
 
+        // ================= 新增：3D 卡片轮播组件 =================
+        const GallerySlider = ({ items, onImageClick }) => {
+            const [currentIndex, setCurrentIndex] = useState(0);
+
+            const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % items.length);
+            const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
+
+            // 计算当前卡片在轮播中的相对位置
+            const getVariant = (idx) => {
+                const diff = (idx - currentIndex + items.length) % items.length;
+                if (diff === 0) return 'center';
+                if (diff === 1) return 'right';
+                if (diff === items.length - 1) return 'left';
+                return 'hidden'; 
+            };
+
+            // 核心动画状态机：定义中间大，两边小的 3D 效果
+            const variants = {
+                center: { x: "0%", scale: 1, zIndex: 10, opacity: 1, filter: "brightness(100%)" },
+                left: { x: "-65%", scale: 0.8, zIndex: 5, opacity: 0.5, filter: "brightness(60%)" },
+                right: { x: "65%", scale: 0.8, zIndex: 5, opacity: 0.5, filter: "brightness(60%)" },
+                hidden: { x: "0%", scale: 0.5, zIndex: 0, opacity: 0, transition: { duration: 0.2 } }
+            };
+
+            return (
+                <div className="relative w-full h-[55vh] md:h-[75vh] flex flex-col items-center justify-center overflow-hidden py-10 bg-neutral-50/50 rounded-[2.5rem] mt-4 shadow-inner">
+                    <div className="relative w-full max-w-[1200px] h-full flex items-center justify-center">
+                        {items.map((item, idx) => {
+                            const variant = getVariant(idx);
+                            const isCenter = variant === 'center';
+                            const thumbUrl = item.thumb || item;
+                            const fullUrl = item.full || item;
+
+                            return (
+                                <motion.div
+                                    key={idx}
+                                    variants={variants}
+                                    initial={false}
+                                    animate={variant}
+                                    transition={{ type: "spring", stiffness: 250, damping: 25, mass: 0.8 }}
+                                    className={`absolute w-[60%] md:w-[40%] lg:w-[32%] aspect-[1/1.414] rounded-2xl md:rounded-[2rem] shadow-2xl overflow-hidden cursor-pointer ${isCenter ? 'ring-[6px] ring-white' : ''}`}
+                                    onClick={() => {
+                                        if (isCenter) onImageClick(fullUrl);
+                                        else if (variant === 'left') prevSlide();
+                                        else if (variant === 'right') nextSlide();
+                                    }}
+                                    drag={isCenter ? "x" : false}
+                                    dragConstraints={{ left: 0, right: 0 }}
+                                    dragElastic={0.2}
+                                    onDragEnd={(e, { offset }) => {
+                                        if (offset.x < -50) nextSlide();
+                                        else if (offset.x > 50) prevSlide();
+                                    }}
+                                >
+                                    <img 
+                                        src={thumbUrl} 
+                                        className="w-full h-full object-cover pointer-events-none" 
+                                        alt="Gallery item" 
+                                        loading="lazy"
+                                        onError={(e) => {
+                                            const parts = (thumbUrl).split('/');
+                                            const text = decodeURIComponent(parts[parts.length - 1]); 
+                                            e.target.onerror = null; 
+                                            e.target.src = `https://placehold.co/600x850/EEF2FF/5D5FEF?text=${encodeURIComponent(text)}`;
+                                        }} 
+                                    />
+                                    {isCenter && (
+                                        <div className="absolute inset-0 bg-black/0 hover:bg-black/15 transition-colors duration-300 flex items-center justify-center opacity-0 hover:opacity-100">
+                                            <div className="w-14 h-14 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center text-white shadow-lg">
+                                                <i data-lucide="zoom-in" className="w-6 h-6"></i>
+                                            </div>
+                                        </div>
+                                    )}
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                    
+                    {/* 悬浮左右控制按钮 */}
+                    <button onClick={prevSlide} className="absolute left-2 md:left-12 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/90 backdrop-blur-md shadow-[0_10px_20px_rgba(0,0,0,0.1)] flex items-center justify-center text-neutral-800 hover:bg-white hover:scale-110 transition-all z-20">
+                        <i data-lucide="chevron-left" className="w-5 h-5 md:w-6 md:h-6"></i>
+                    </button>
+                    <button onClick={nextSlide} className="absolute right-2 md:right-12 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/90 backdrop-blur-md shadow-[0_10px_20px_rgba(0,0,0,0.1)] flex items-center justify-center text-neutral-800 hover:bg-white hover:scale-110 transition-all z-20">
+                        <i data-lucide="chevron-right" className="w-5 h-5 md:w-6 md:h-6"></i>
+                    </button>
+
+                    {/* 底部拉宽指示器 */}
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 md:gap-3 z-20">
+                        {items.map((_, idx) => (
+                            <button 
+                                key={idx} 
+                                onClick={() => setCurrentIndex(idx)}
+                                className={`h-1.5 md:h-2 rounded-full transition-all duration-500 ${idx === currentIndex ? 'bg-[#5D5FEF] w-8 md:w-12 shadow-sm' : 'bg-neutral-300 hover:bg-neutral-400 w-2 md:w-2.5'}`}
+                            />
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+        // ================= 轮播组件结束 =================
+
         const App = () => {
             const [isScrolled, setIsScrolled] = useState(false);
             const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -57,7 +158,6 @@
             
             const [activeProject, setActiveProject] = useState(null);
             
-            // 全屏放大镜相关的状态
             const [lightboxImg, setLightboxImg] = useState(null);
             const [lightboxScale, setLightboxScale] = useState(1);
 
@@ -69,7 +169,6 @@
                 return () => window.removeEventListener('scroll', handleScroll);
             }, []);
 
-            // 锁定背景滚动及重置缩放比例
             useEffect(() => {
                 if (activeProject || qrModal.isOpen || lightboxImg) {
                     document.body.style.overflow = 'hidden';
@@ -77,7 +176,6 @@
                     document.body.style.overflow = 'unset';
                 }
                 
-                // 当关闭大图时，重置缩放比例
                 if (!lightboxImg) {
                     setLightboxScale(1);
                 }
@@ -88,7 +186,6 @@
                 lucide.createIcons();
             });
 
-            // 智能占位图处理函数
             const handleImageError = (e, fallbackSize = '800x600') => {
                 const originalSrc = e.target.getAttribute('src');
                 let text = "Image";
@@ -131,13 +228,11 @@
                 setIsMenuOpen(false);
             };
 
-            // 大图查看器的滚轮缩放事件
             const handleWheelZoom = (e) => {
                 e.preventDefault();
-                const zoomSensitivity = 0.002; // 调整滚轮的敏感度
+                const zoomSensitivity = 0.002; 
                 setLightboxScale(prev => {
                     const newScale = prev - e.deltaY * zoomSensitivity;
-                    // 限制缩放级别在 0.5 到 5 倍之间
                     return Math.min(Math.max(0.5, newScale), 5);
                 });
             };
@@ -190,13 +285,12 @@
                 { 
                     id: 2, 
                     title: "AIGC+建筑空间美学", 
-                    image: "images/AI+建筑封面图.png", // 已将后缀修改为.png，与你文件夹中保持一致
+                    image: "images/AI+建筑封面图.jpg", // 已恢复为你指定的 jpg 格式封面图
                     description: "基于Stable Diffusion 及 Nanobanana 工作流的建筑空间生成。", 
                     fullDescription: "探索AI辅助建筑设计的前沿边界。本系列作品主要展示基于 Stable Diffusion 结合 Nanobanana 创新工作流的建筑空间概念生成。旨在突破传统设计的灵感瓶颈，实现从文本语言到高品质建筑可视化展板的快速转化。",
                     tags: ["SD", "Nanobanana"],
                     customContent: true, 
                     subCategory: "Nanobanana+建筑展板设计",
-                    // 【全新优化机制】：采用 thumb(缩略图) 与 full(高清原图) 双轨加载机制，极大优化手机端加载速度
                     gridImages: [
                         { thumb: "images/AI建筑案例1-01_thumb.jpg", full: "images/AI建筑案例1-01.jpg" },
                         { thumb: "images/AI建筑案例1-02_thumb.jpg", full: "images/AI建筑案例1-02.jpg" },
@@ -565,7 +659,7 @@
                                                 src={p.image} 
                                                 className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110" 
                                                 alt={p.title} 
-                                                loading="lazy" /* 增加原生懒加载机制 */
+                                                loading="lazy"
                                                 onError={(e) => handleImageError(e, '800x600')}
                                             />
                                         </div>
@@ -743,37 +837,18 @@
 
                                     <div className="max-w-[1400px] mx-auto py-10 md:py-12 px-4 md:px-8 flex flex-col gap-6 md:gap-10 pb-32">
                                         
+                                        {/* 【渲染逻辑分支】：如果是 customContent，渲染酷炫 3D 轮播 */}
                                         {activeProject.customContent ? (
                                             <div className="flex flex-col gap-6 md:gap-8 w-full">
                                                 <div className="pb-3 border-b-2 border-neutral-100">
                                                     <h3 className="text-xl md:text-2xl font-black text-[#1D1D1F] border-l-[5px] border-[#5D5FEF] pl-4 leading-tight">{activeProject.subCategory}</h3>
                                                 </div>
-                                                {/* 【全新优化机制】：将手机端的单排显示改为了双列 (grid-cols-2) */}
-                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mt-2">
-                                                    {activeProject.gridImages.map((imgItem, idx) => {
-                                                        // 兼容双轨制处理：网格读缩略图，放大读原图
-                                                        const thumbUrl = imgItem.thumb || imgItem;
-                                                        const fullUrl = imgItem.full || imgItem;
-                                                        
-                                                        return (
-                                                            <motion.div
-                                                                key={idx}
-                                                                whileHover={{ scale: 1.02, y: -5 }}
-                                                                className="cursor-zoom-in rounded-lg md:rounded-[1rem] overflow-hidden shadow-sm hover:shadow-[0_20px_40px_rgba(0,0,0,0.15)] border border-neutral-100 bg-white transition-all duration-300 relative group"
-                                                                onClick={() => setLightboxImg(fullUrl)}
-                                                            >
-                                                                <img 
-                                                                    src={thumbUrl} 
-                                                                    alt={`展板设计 ${idx + 1}`} 
-                                                                    className="w-full h-auto block object-cover aspect-[3/4]"
-                                                                    loading="lazy" /* 增加原生懒加载机制 */
-                                                                    onError={(e) => handleImageError(e, '400x600')}
-                                                                />
-                                                                <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                                                            </motion.div>
-                                                        );
-                                                    })}
-                                                </div>
+                                                
+                                                {/* 渲染独立封装的轮播组件 */}
+                                                <GallerySlider 
+                                                    items={activeProject.gridImages} 
+                                                    onImageClick={setLightboxImg} 
+                                                />
                                             </div>
                                         ) : (
                                             /* 常规的长图展示布局 */
