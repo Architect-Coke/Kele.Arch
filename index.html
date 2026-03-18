@@ -67,14 +67,17 @@
             // 核心动画状态机：定义中间大，两边小的 3D 效果
             const variants = {
                 center: { x: "0%", scale: 1, zIndex: 10, opacity: 1, filter: "brightness(100%)" },
-                left: { x: "-65%", scale: 0.8, zIndex: 5, opacity: 0.5, filter: "brightness(60%)" },
-                right: { x: "65%", scale: 0.8, zIndex: 5, opacity: 0.5, filter: "brightness(60%)" },
+                // 放大偏移量(x)至80%与缩放比例(scale)，让两边留白减少，副图更向边缘撑开
+                left: { x: "-80%", scale: 0.85, zIndex: 5, opacity: 0.6, filter: "brightness(60%)" },
+                right: { x: "80%", scale: 0.85, zIndex: 5, opacity: 0.6, filter: "brightness(60%)" },
                 hidden: { x: "0%", scale: 0.5, zIndex: 0, opacity: 0, transition: { duration: 0.2 } }
             };
 
             return (
-                <div className="relative w-full h-[55vh] md:h-[75vh] flex flex-col items-center justify-center overflow-hidden py-10 bg-neutral-50/50 rounded-[2.5rem] mt-4 shadow-inner">
-                    <div className="relative w-full max-w-[1200px] h-full flex items-center justify-center">
+                // 移除了 bg-neutral-50/50, rounded-[2.5rem], shadow-inner 从而去除外侧底色与边框
+                <div className="relative w-full h-[60vh] md:h-[85vh] flex flex-col items-center justify-center overflow-hidden py-4 mt-2">
+                    {/* 放宽容器宽度至 1400px，让两侧图片有更多向外扩张的空间 */}
+                    <div className="relative w-full max-w-[1400px] h-full flex items-center justify-center">
                         {items.map((item, idx) => {
                             const variant = getVariant(idx);
                             const isCenter = variant === 'center';
@@ -88,7 +91,8 @@
                                     initial={false}
                                     animate={variant}
                                     transition={{ type: "spring", stiffness: 250, damping: 25, mass: 0.8 }}
-                                    className={`absolute w-[60%] md:w-[40%] lg:w-[32%] aspect-[1/1.414] rounded-2xl md:rounded-[2rem] shadow-2xl overflow-hidden cursor-pointer ${isCenter ? 'ring-[6px] ring-white' : ''}`}
+                                    // 加大了卡片本身的宽度比例 (lg:w-[42%]) 让主图明显变大
+                                    className={`absolute w-[70%] md:w-[50%] lg:w-[42%] aspect-[1/1.414] rounded-2xl md:rounded-[2rem] shadow-[0_25px_60px_rgba(0,0,0,0.15)] overflow-hidden cursor-pointer ${isCenter ? 'ring-[6px] md:ring-[8px] ring-white/90' : ''}`}
                                     onClick={() => {
                                         if (isCenter) onImageClick(fullUrl);
                                         else if (variant === 'left') prevSlide();
@@ -126,16 +130,16 @@
                         })}
                     </div>
                     
-                    {/* 悬浮左右控制按钮 */}
-                    <button onClick={prevSlide} className="absolute left-2 md:left-12 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/90 backdrop-blur-md shadow-[0_10px_20px_rgba(0,0,0,0.1)] flex items-center justify-center text-neutral-800 hover:bg-white hover:scale-110 transition-all z-20">
+                    {/* 悬浮左右控制按钮 - 升级为高斯模糊的高透玻璃拟态，降低视觉阻碍感 */}
+                    <button onClick={prevSlide} className="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/20 backdrop-blur-lg border border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.1)] flex items-center justify-center text-neutral-800 hover:bg-white/40 hover:scale-110 transition-all z-20">
                         <i data-lucide="chevron-left" className="w-5 h-5 md:w-6 md:h-6"></i>
                     </button>
-                    <button onClick={nextSlide} className="absolute right-2 md:right-12 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/90 backdrop-blur-md shadow-[0_10px_20px_rgba(0,0,0,0.1)] flex items-center justify-center text-neutral-800 hover:bg-white hover:scale-110 transition-all z-20">
+                    <button onClick={nextSlide} className="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/20 backdrop-blur-lg border border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.1)] flex items-center justify-center text-neutral-800 hover:bg-white/40 hover:scale-110 transition-all z-20">
                         <i data-lucide="chevron-right" className="w-5 h-5 md:w-6 md:h-6"></i>
                     </button>
 
                     {/* 底部拉宽指示器 */}
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 md:gap-3 z-20">
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-2 md:gap-3 z-20">
                         {items.map((_, idx) => (
                             <button 
                                 key={idx} 
