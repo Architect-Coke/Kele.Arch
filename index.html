@@ -48,6 +48,8 @@
             const [navKeys, setNavKeys] = useState({ home: 0, about: 0, works: 0, contact: 0 });
             
             const [activeProject, setActiveProject] = useState(null);
+            // 用于控制图片点击全屏放大的状态
+            const [lightboxImg, setLightboxImg] = useState(null);
 
             useEffect(() => {
                 const handleScroll = () => {
@@ -57,18 +59,33 @@
                 return () => window.removeEventListener('scroll', handleScroll);
             }, []);
 
+            // 当打开详情页、二维码、或放大图片时，锁定背景滚动
             useEffect(() => {
-                if (activeProject || qrModal.isOpen) {
+                if (activeProject || qrModal.isOpen || lightboxImg) {
                     document.body.style.overflow = 'hidden';
                 } else {
                     document.body.style.overflow = 'unset';
                 }
                 return () => { document.body.style.overflow = 'unset'; }
-            }, [activeProject, qrModal.isOpen]);
+            }, [activeProject, qrModal.isOpen, lightboxImg]);
 
             useEffect(() => {
                 lucide.createIcons();
             });
+
+            // ================= 新增：智能占位图处理函数 =================
+            // 当图片加载失败时，自动提取原路径中的文件名，并生成对应尺寸的精美色块
+            const handleImageError = (e, fallbackSize = '800x600') => {
+                const originalSrc = e.target.getAttribute('src');
+                let text = "Image";
+                if (originalSrc) {
+                    const parts = originalSrc.split('/');
+                    text = decodeURIComponent(parts[parts.length - 1]); // 提取带后缀的文件名
+                }
+                e.target.onerror = null; // 防止自身加载失败造成死循环
+                // 使用占位图服务生成色块：底色浅蓝 EEF2FF，文字颜色 5D5FEF
+                e.target.src = `https://placehold.co/${fallbackSize}/EEF2FF/5D5FEF?text=${encodeURIComponent(text)}`;
+            };
 
             const handleCopy = (text) => {
                 const textArea = document.createElement("textarea");
@@ -151,7 +168,16 @@
                     title: "AIGC+建筑空间美学", 
                     image: "images/AI+建筑封面图.jpg", 
                     description: "基于Stable Diffusion 及 Nanobanana 工作流的建筑空间生成。", 
-                    tags: ["SD", "Nanobanana"] 
+                    fullDescription: "探索AI辅助建筑设计的前沿边界。本系列作品主要展示基于 Stable Diffusion 结合 Nanobanana 创新工作流的建筑空间概念生成。旨在突破传统设计的灵感瓶颈，实现从文本语言到高品质建筑可视化展板的快速转化。",
+                    tags: ["SD", "Nanobanana"],
+                    customContent: true, // 开启定制画廊内容标记
+                    subCategory: "Nanobanana+建筑展板设计",
+                    gridImages: [
+                        "images/AI建筑案例1-01.jpg",
+                        "images/AI建筑案例1-02.jpg",
+                        "images/AI建筑案例1-03.jpg",
+                        "images/AI建筑案例1-04.jpg"
+                    ]
                 },
                 { id: 3, title: "AIGC 视觉生成", image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600", description: "融合 16 年原创教程开发经验，将专业技术拆解为零基础可上手的 SOP 路径。", tags: ["知识产品化", "视觉生成", "AI 艺术"] },
                 { id: 4, title: "AIGC 动态影像", image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=600", description: "探索 AI 技术在动态影像领域的应用，打造高品质的视觉内容与运动图形。", tags: ["动态影像", "视频制作", "运动图形"] },
@@ -310,9 +336,8 @@
                         </div>
                     </nav>
 
-                    {/* Hero Section (首页板块) - 移动端头像完美居中调整，优化顶部留白与大字排版 */}
+                    {/* Hero Section (首页板块) */}
                     <section id="home" className="relative pt-24 md:pt-28 lg:pt-32 pb-20 px-6 md:px-16 min-h-[90vh] flex items-center overflow-hidden">
-                        {/* 修改点：缩小了手机端的 gap-8，让头像和文字更紧凑 */}
                         <div className="max-w-[1400px] mx-auto w-full flex flex-col-reverse lg:flex-row items-center justify-between gap-8 lg:gap-16">
                             
                             {/* 左侧文字区 */}
@@ -329,7 +354,6 @@
                                     </span>
                                 </motion.div>
                                 
-                                {/* 强制单行主标题：增大手机端最小边界至 44px，撑满画幅 */}
                                 <motion.h1 
                                     variants={fadeUpSpringVariant} 
                                     className="font-[900] tracking-tight text-[#1D1D1F] leading-[1.05] mb-5 md:mb-6"
@@ -338,7 +362,6 @@
                                     AIGC + 设计
                                 </motion.h1>
                                 
-                                {/* 强制单行副标题：同步放大比例，保持单行极限尺寸 */}
                                 <motion.h2 
                                     variants={fadeUpSpringVariant} 
                                     className="font-[800] tracking-tight leading-[1.1] mb-8 md:mb-10"
@@ -368,7 +391,7 @@
                                 </motion.div>
                             </motion.div>
 
-                            {/* 右侧头像区 - 去除了手机端不必要的 mt-8 边距，直接向上提 */}
+                            {/* 右侧头像区 */}
                             <motion.div 
                                 key={`home-img-${navKeys.home}`}
                                 className="relative flex-shrink-0 mx-auto lg:mx-0 mt-2 lg:mt-0"
@@ -382,7 +405,13 @@
                                     whileHover={{ scale: 1.02 }}
                                     transition={{ duration: 0.3, ease: "easeOut" }}
                                 >
-                                    <img src="images/3;4.jpg" alt="Architect Kele" className="w-full h-full object-cover object-top" />
+                                    {/* 新增了 onError 回调 */}
+                                    <img 
+                                        src="images/3;4.jpg" 
+                                        alt="Architect Kele" 
+                                        className="w-full h-full object-cover object-top" 
+                                        onError={(e) => handleImageError(e, '400x400')}
+                                    />
                                 </motion.div>
                             </motion.div>
                             
@@ -499,17 +528,19 @@
                                         key={p.id} 
                                         variants={fadeUpSpringVariant}
                                         onClick={() => {
-                                            if(p.detailImages && p.detailImages.length > 0) {
+                                            if((p.detailImages && p.detailImages.length > 0) || p.customContent) {
                                                 setActiveProject(p);
                                             }
                                         }}
                                         className="group cursor-pointer bg-white rounded-[1.5rem] overflow-hidden shadow-sm hover:shadow-[0_15px_40px_rgba(0,0,0,0.18)] hover:-translate-y-1 transition-all duration-300 border border-neutral-100 flex flex-col"
                                     >
                                         <div className="w-full aspect-[4/3] bg-neutral-100 overflow-hidden relative">
+                                            {/* 新增了 onError 回调 */}
                                             <img 
                                                 src={p.image} 
                                                 className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110" 
                                                 alt={p.title} 
+                                                onError={(e) => handleImageError(e, '800x600')}
                                             />
                                         </div>
                                         <div className="p-6 flex flex-col flex-1 relative bg-white z-10">
@@ -686,26 +717,95 @@
                                         </div>
                                     </div>
 
-                                    {/* 长图内容区 */}
+                                    {/* 长图/网格内容区 */}
                                     <div className="max-w-[1200px] mx-auto py-12 md:py-16 px-6 md:px-16 flex flex-col gap-10 md:gap-16 pb-32">
-                                        {activeProject.detailImages.map((imgUrl, idx) => (
-                                            <motion.div
-                                                key={idx}
-                                                initial={{ opacity: 0, y: 40 }}
-                                                whileInView={{ opacity: 1, y: 0 }}
-                                                viewport={{ once: true, margin: "-100px" }}
-                                                transition={{ duration: 0.6, ease: "easeOut" }}
-                                                className="w-full bg-white rounded-2xl md:rounded-[1.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.06)] overflow-hidden border border-neutral-100"
-                                            >
-                                                <img 
-                                                    src={imgUrl} 
-                                                    alt={`${activeProject.title} 展示图 ${idx + 1}`} 
-                                                    className="w-full h-auto block"
-                                                />
-                                            </motion.div>
-                                        ))}
+                                        
+                                        {activeProject.customContent ? (
+                                            <div className="flex flex-col gap-8 w-full">
+                                                <div className="pb-3 border-b-2 border-neutral-100">
+                                                    <h3 className="text-xl md:text-2xl font-black text-[#1D1D1F] border-l-[5px] border-[#5D5FEF] pl-4 leading-tight">{activeProject.subCategory}</h3>
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mt-4">
+                                                    {activeProject.gridImages.map((imgUrl, idx) => (
+                                                        <motion.div
+                                                            key={idx}
+                                                            whileHover={{ scale: 1.03, y: -5 }}
+                                                            className="cursor-zoom-in rounded-[1rem] overflow-hidden shadow-sm hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] border border-neutral-100 bg-white transition-all duration-300"
+                                                            onClick={() => setLightboxImg(imgUrl)}
+                                                        >
+                                                            {/* 新增了 onError 回调 */}
+                                                            <img 
+                                                                src={imgUrl} 
+                                                                alt={`展板设计 ${idx + 1}`} 
+                                                                className="w-full h-auto block object-cover aspect-[3/4]"
+                                                                onError={(e) => handleImageError(e, '800x1200')}
+                                                            />
+                                                            <div className="p-4 bg-white flex items-center justify-between">
+                                                                <span className="text-[13px] font-bold text-neutral-800">查看大图</span>
+                                                                <div className="w-6 h-6 rounded-full bg-neutral-50 flex items-center justify-center text-neutral-400">
+                                                                    <i data-lucide="zoom-in" className="w-3.5 h-3.5"></i>
+                                                                </div>
+                                                            </div>
+                                                        </motion.div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            /* 常规的长图展示布局 */
+                                            activeProject.detailImages && activeProject.detailImages.map((imgUrl, idx) => (
+                                                <motion.div
+                                                    key={idx}
+                                                    initial={{ opacity: 0, y: 40 }}
+                                                    whileInView={{ opacity: 1, y: 0 }}
+                                                    viewport={{ once: true, margin: "-100px" }}
+                                                    transition={{ duration: 0.6, ease: "easeOut" }}
+                                                    className="w-full bg-white rounded-2xl md:rounded-[1.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.06)] overflow-hidden border border-neutral-100"
+                                                >
+                                                    {/* 新增了 onError 回调 */}
+                                                    <img 
+                                                        src={imgUrl} 
+                                                        alt={`${activeProject.title} 展示图 ${idx + 1}`} 
+                                                        className="w-full h-auto block"
+                                                        onError={(e) => handleImageError(e, '1200x800')}
+                                                    />
+                                                </motion.div>
+                                            ))
+                                        )}
+                                        
                                     </div>
                                 </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* 图片放大查看器 (Lightbox) */}
+                    <AnimatePresence>
+                        {lightboxImg && (
+                            <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.25 }}
+                                className="fixed inset-0 bg-[#0f0f11]/95 backdrop-blur-sm z-[200] flex items-center justify-center p-4 md:p-10 cursor-zoom-out"
+                                onClick={() => setLightboxImg(null)}
+                            >
+                                <button 
+                                    className="absolute top-6 right-6 md:top-10 md:right-10 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full text-white flex items-center justify-center transition-colors z-50 backdrop-blur-md"
+                                    onClick={() => setLightboxImg(null)}
+                                >
+                                    <i data-lucide="x" className="w-6 h-6"></i>
+                                </button>
+                                <motion.img 
+                                    initial={{ scale: 0.9, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    exit={{ scale: 0.9, opacity: 0 }}
+                                    transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                                    src={lightboxImg} 
+                                    alt="放大查看" 
+                                    className="max-w-full max-h-full object-contain cursor-default shadow-[0_20px_60px_rgba(0,0,0,0.5)] rounded-md"
+                                    onClick={(e) => e.stopPropagation()}
+                                    onError={(e) => handleImageError(e, '1200x1200')}
+                                />
                             </motion.div>
                         )}
                     </AnimatePresence>
@@ -734,7 +834,12 @@
                                     </button>
                                     <h3 className="text-2xl font-black text-center mb-10 text-[#1D1D1F]">我的{qrModal.title}</h3>
                                     <div className="bg-neutral-50 rounded-[2.5rem] p-6 border border-neutral-100 mb-8 aspect-square flex items-center justify-center overflow-hidden shadow-inner">
-                                        <img src={qrModal.imgUrl} alt={qrModal.title} className="w-full h-full object-contain mix-blend-multiply" />
+                                        <img 
+                                            src={qrModal.imgUrl} 
+                                            alt={qrModal.title} 
+                                            className="w-full h-full object-contain mix-blend-multiply" 
+                                            onError={(e) => handleImageError(e, '400x400')}
+                                        />
                                     </div>
                                     <p className="text-center text-[13px] font-bold text-neutral-400 px-4 leading-relaxed">
                                         请打开手机 App 扫码关注<br/>获取更多专业教程与资讯更新
