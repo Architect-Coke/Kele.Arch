@@ -48,7 +48,7 @@
         const { useState, useEffect } = React;
         const { motion, AnimatePresence } = window.Motion;
 
-        // ================= 新增：3D 卡片轮播组件 =================
+        // ================= 3D 卡片轮播组件 =================
         const GallerySlider = ({ items, onImageClick }) => {
             const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -64,9 +64,6 @@
                 return 'hidden'; 
             };
 
-            // 【核心排版微调】：
-            // 1. 加大两侧图片透明度（opacity降至0.5，亮度80%），使其更具通透感。
-            // 2. 将左右位移拉开到 ±85%，让两侧的图片展示出更多内容，减少被中心主图遮挡的区域。
             const variants = {
                 center: { x: "0%", scale: 1, zIndex: 10, opacity: 1, filter: "brightness(100%)", boxShadow: "0 30px 60px -12px rgba(0,0,0,0.3)" },
                 left: { x: "-85%", scale: 0.85, zIndex: 5, opacity: 0.5, filter: "brightness(80%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
@@ -90,7 +87,6 @@
                                     variants={variants}
                                     initial={false}
                                     animate={variant}
-                                    // 鼠标放在半透明的副图上时，瞬间恢复100%清晰度并往外探出(±92%)，诱发点击
                                     whileHover={
                                         isCenter 
                                             ? { scale: 1.02 } 
@@ -105,7 +101,6 @@
                                                 : {}
                                     }
                                     transition={{ type: "spring", stiffness: 250, damping: 25, mass: 0.8 }}
-                                    // 【主图收缩】：将基准宽度从 45% 缩小到 38%，使得画幅更加精致且主次明确
                                     className={`absolute w-[70%] md:w-[50%] lg:w-[38%] aspect-[1/1.414] rounded-3xl md:rounded-[2.5rem] overflow-hidden cursor-pointer ${isCenter ? 'ring-[6px] md:ring-[8px] ring-white/90' : ''}`}
                                     onClick={() => {
                                         if (isCenter) onImageClick(fullUrl);
@@ -307,17 +302,36 @@
                     description: "基于Stable Diffusion 及 Nanobanana 工作流的建筑空间生成。", 
                     fullDescription: "探索AI辅助建筑设计的前沿边界。本系列作品主要展示基于 Stable Diffusion 结合 Nanobanana 创新工作流的建筑空间概念生成。旨在突破传统设计的灵感瓶颈，实现从文本语言到高品质建筑可视化展板的快速转化。",
                     tags: ["SD", "Nanobanana"],
-                    customContent: true, 
-                    subCategory: "Nanobanana+建筑展板设计",
-                    gridImages: [
-                        { thumb: "images/AI建筑案例1-01_thumb.jpg", full: "images/AI建筑案例1-01.jpg" },
-                        { thumb: "images/AI建筑案例1-02_thumb.jpg", full: "images/AI建筑案例1-02.jpg" },
-                        { thumb: "images/AI建筑案例1-03_thumb.jpg", full: "images/AI建筑案例1-03.jpg" },
-                        { thumb: "images/AI建筑案例1-04_thumb.jpg", full: "images/AI建筑案例1-04.jpg" },
-                        { thumb: "images/AI建筑案例2-01_thumb.jpg", full: "images/AI建筑案例2-01.jpg" },
-                        { thumb: "images/AI建筑案例2-02_thumb.png", full: "images/AI建筑案例2-02.png" },
-                        { thumb: "images/AI建筑案例2-03_thumb.jpg", full: "images/AI建筑案例2-03.jpg" },
-                        { thumb: "images/AI建筑案例2-04_thumb.jpg", full: "images/AI建筑案例2-04.jpg" }
+                    customContent: true, // 开启自定义区块模式
+                    // 【全新升级】：支持多个 3D 轮播模块
+                    sections: [
+                        {
+                            title: "Nanobanana+建筑展板设计",
+                            images: [
+                                { thumb: "images/AI建筑案例1-01_thumb.jpg", full: "images/AI建筑案例1-01.jpg" },
+                                { thumb: "images/AI建筑案例1-02_thumb.jpg", full: "images/AI建筑案例1-02.jpg" },
+                                { thumb: "images/AI建筑案例1-03_thumb.jpg", full: "images/AI建筑案例1-03.jpg" },
+                                { thumb: "images/AI建筑案例1-04_thumb.jpg", full: "images/AI建筑案例1-04.jpg" },
+                                { thumb: "images/AI建筑案例2-01_thumb.jpg", full: "images/AI建筑案例2-01.jpg" },
+                                { thumb: "images/AI建筑案例2-02_thumb.png", full: "images/AI建筑案例2-02.png" },
+                                { thumb: "images/AI建筑案例2-03_thumb.jpg", full: "images/AI建筑案例2-03.jpg" },
+                                { thumb: "images/AI建筑案例2-04_thumb.jpg", full: "images/AI建筑案例2-04.jpg" }
+                            ]
+                        },
+                        {
+                            title: "Nanobanana+建筑模型设计",
+                            images: [
+                                { thumb: "images/建筑手办_thumb.jpg", full: "images/建筑手办.jpg" },
+                                { thumb: "images/建筑手办2_thumb.jpg", full: "images/建筑手办2.jpg" },
+                                { thumb: "images/建筑手办3_thumb.jpg", full: "images/建筑手办3.jpg" },
+                                { thumb: "images/建筑手办4_thumb.jpg", full: "images/建筑手办4.jpg" },
+                                { thumb: "images/建筑手办5_thumb.jpg", full: "images/建筑手办5.jpg" },
+                                { thumb: "images/建筑手办6_thumb.jpg", full: "images/建筑手办6.jpg" },
+                                { thumb: "images/建筑手办7_thumb.jpg", full: "images/建筑手办7.jpg" },
+                                { thumb: "images/建筑手办8_thumb.jpg", full: "images/建筑手办8.jpg" },
+                                { thumb: "images/建筑手办9_thumb.jpg", full: "images/建筑手办9.jpg" }
+                            ]
+                        }
                     ]
                 },
                 { id: 3, title: "AIGC 视觉生成", image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600", description: "融合 16 年原创教程开发经验，将专业技术拆解为零基础可上手的 SOP 路径。", tags: ["知识产品化", "视觉生成", "AI 艺术"] },
@@ -855,18 +869,22 @@
 
                                     <div className="max-w-[1400px] mx-auto py-10 md:py-12 px-4 md:px-8 flex flex-col gap-6 md:gap-10 pb-32">
                                         
-                                        {/* 【渲染逻辑分支】：如果是 customContent，渲染酷炫 3D 轮播 */}
+                                        {/* 【全新渲染逻辑】：如果存在 sections，遍历渲染多个带独立标题的 3D 轮播模块 */}
                                         {activeProject.customContent ? (
-                                            <div className="flex flex-col gap-6 md:gap-8 w-full">
-                                                <div className="pb-3 border-b-2 border-neutral-100">
-                                                    <h3 className="text-xl md:text-2xl font-black text-[#1D1D1F] border-l-[5px] border-[#5D5FEF] pl-4 leading-tight">{activeProject.subCategory}</h3>
-                                                </div>
-                                                
-                                                {/* 渲染独立封装的轮播组件 */}
-                                                <GallerySlider 
-                                                    items={activeProject.gridImages} 
-                                                    onImageClick={setLightboxImg} 
-                                                />
+                                            <div className="flex flex-col gap-12 md:gap-16 w-full">
+                                                {activeProject.sections && activeProject.sections.map((section, sIdx) => (
+                                                    <div key={sIdx} className="flex flex-col gap-6 md:gap-8 w-full">
+                                                        <div className="pb-3 border-b-2 border-neutral-100">
+                                                            <h3 className="text-xl md:text-2xl font-black text-[#1D1D1F] border-l-[5px] border-[#5D5FEF] pl-4 leading-tight">{section.title}</h3>
+                                                        </div>
+                                                        
+                                                        {/* 渲染独立封装的轮播组件，由于有独立的状态，多个画廊互相不干扰 */}
+                                                        <GallerySlider 
+                                                            items={section.images} 
+                                                            onImageClick={setLightboxImg} 
+                                                        />
+                                                    </div>
+                                                ))}
                                             </div>
                                         ) : (
                                             /* 常规的长图展示布局 */
