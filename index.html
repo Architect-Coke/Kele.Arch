@@ -357,6 +357,18 @@
                     customContent: true, 
                     sections: [
                         {
+                            title: "Nanobanana+创意艺术",
+                            images: [
+                                { thumb: "images/创意艺术 (4)_thumb.jpg", full: "images/创意艺术 (4).jpg", video: "images/创意艺术 (4).mp4" },
+                                // 修复 Bug：精准匹配你本地多出一个空格的图片文件名，并兼容 mp4 视频
+                                { thumb: "images/创意艺术 (9) .jpg", full: "images/创意艺术 (9) .jpg", video: "images/创意艺术 (9).mp4" },
+                                { thumb: "images/创意艺术 (3)_thumb.jpg", full: "images/创意艺术 (3).jpg", video: "images/创意艺术 (3).mp4" },
+                                { thumb: "images/创意艺术 (5)_thumb.jpg", full: "images/创意艺术 (5).jpg", video: "images/创意艺术 (5).mp4" },
+                                { thumb: "images/创意艺术 (6)_thumb.jpg", full: "images/创意艺术 (6).jpg", video: "images/创意艺术 (6).mp4" },
+                                { thumb: "images/创意艺术 (8)_thumb.jpg", full: "images/创意艺术 (8).jpg" }
+                            ]
+                        },
+                        {
                             title: "Nanobanana+艺术照片",
                             images: [
                                 { thumb: "images/艺术照 (1)_thumb.jpg", full: "images/艺术照 (1).jpg" },
@@ -375,18 +387,6 @@
                                 { thumb: "images/手办 (4)_thumb.jpg", full: "images/手办 (4).jpg" },
                                 { thumb: "images/手办 (5)_thumb.jpg", full: "images/手办 (5).jpg" },
                                 { thumb: "images/手办 (6)_thumb.jpg", full: "images/手办 (6).jpg" }
-                            ]
-                        },
-                        {
-                            title: "Nanobanana+创意艺术",
-                            images: [
-                                { thumb: "images/创意艺术 (4)_thumb.jpg", full: "images/创意艺术 (4).jpg", video: "images/创意艺术 (4).mp4" },
-                                // 修复 Bug：精准匹配你本地多出一个空格的图片文件名，并兼容 mp4 视频
-                                { thumb: "images/创意艺术 (9) .jpg", full: "images/创意艺术 (9) .jpg", video: "images/创意艺术 (9).mp4" },
-                                { thumb: "images/创意艺术 (3)_thumb.jpg", full: "images/创意艺术 (3).jpg", video: "images/创意艺术 (3).mp4" },
-                                { thumb: "images/创意艺术 (5)_thumb.jpg", full: "images/创意艺术 (5).jpg", video: "images/创意艺术 (5).mp4" },
-                                { thumb: "images/创意艺术 (6)_thumb.jpg", full: "images/创意艺术 (6).jpg", video: "images/创意艺术 (6).mp4" },
-                                { thumb: "images/创意艺术 (8)_thumb.jpg", full: "images/创意艺术 (8).jpg" }
                             ]
                         },
                         {
@@ -625,7 +625,7 @@
                                     transition={{ duration: 0.3, ease: "easeOut" }}
                                 >
                                     <img 
-                                        src="images/3;4.jpg" 
+                                        src="images/人物图像 .jpg" 
                                         alt="Architect Kele" 
                                         className="w-full h-full object-cover object-top" 
                                         onError={(e) => handleImageError(e, '400x400')}
