@@ -146,7 +146,13 @@
             ];
 
             const projects = [
-                { id: 2, title: "AIGC+建筑空间美学", image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=600", description: "基于 Midjourney 和 Stable Diffusion 工作流的建筑级空间生成项目。", tags: ["Midjourney", "Stable Diffusion", "空间生成"] },
+                { 
+                    id: 2, 
+                    title: "AIGC+建筑空间美学", 
+                    image: "images/AI+建筑封面图.jpg", 
+                    description: "基于Stable Diffusion 及 Nanobanana 工作流的建筑空间生成。", 
+                    tags: ["SD", "Nanobanana"] 
+                },
                 { id: 3, title: "AIGC 视觉生成", image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600", description: "融合 16 年原创教程开发经验，将专业技术拆解为零基础可上手的 SOP 路径。", tags: ["知识产品化", "视觉生成", "AI 艺术"] },
                 { id: 4, title: "AIGC 动态影像", image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=600", description: "探索 AI 技术在动态影像领域的应用，打造高品质的视觉内容与运动图形。", tags: ["动态影像", "视频制作", "运动图形"] },
                 { 
@@ -304,10 +310,10 @@
                         </div>
                     </nav>
 
-                    {/* Hero Section (首页板块) - 移动端头像完美居中调整 */}
-                    <section id="home" className="relative pt-28 pb-20 px-6 md:px-16 min-h-[90vh] flex items-center overflow-hidden">
-                        {/* 核心修改点：flex-col-reverse 使得手机端图片跑到文字上方！ */}
-                        <div className="max-w-[1400px] mx-auto w-full flex flex-col-reverse lg:flex-row items-center justify-between gap-12 lg:gap-16">
+                    {/* Hero Section (首页板块) - 移动端头像完美居中调整，优化顶部留白与大字排版 */}
+                    <section id="home" className="relative pt-24 md:pt-28 lg:pt-32 pb-20 px-6 md:px-16 min-h-[90vh] flex items-center overflow-hidden">
+                        {/* 修改点：缩小了手机端的 gap-8，让头像和文字更紧凑 */}
+                        <div className="max-w-[1400px] mx-auto w-full flex flex-col-reverse lg:flex-row items-center justify-between gap-8 lg:gap-16">
                             
                             {/* 左侧文字区 */}
                             <motion.div 
@@ -317,26 +323,26 @@
                                 initial="hidden"
                                 animate="visible"
                             >
-                                <motion.div variants={fadeUpSpringVariant} className="flex flex-wrap items-center gap-3 mb-6 mt-2 lg:mt-0">
+                                <motion.div variants={fadeUpSpringVariant} className="flex flex-wrap items-center gap-3 mb-6 mt-4 lg:mt-0">
                                     <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#EEF2FF] text-[#5D5FEF] text-[13px] font-bold shadow-sm border border-indigo-50">
                                         👋 你好，我是建筑师可乐
                                     </span>
                                 </motion.div>
                                 
-                                {/* 强制单行主标题：提高 clamp 最小值，并使用原生 whiteSpace 锁定绝不换行 */}
+                                {/* 强制单行主标题：增大手机端最小边界至 44px，撑满画幅 */}
                                 <motion.h1 
                                     variants={fadeUpSpringVariant} 
                                     className="font-[900] tracking-tight text-[#1D1D1F] leading-[1.05] mb-5 md:mb-6"
-                                    style={{ whiteSpace: 'nowrap', fontSize: 'clamp(34px, 10.5vw, 84px)' }}
+                                    style={{ whiteSpace: 'nowrap', fontSize: 'clamp(44px, 12.5vw, 84px)' }}
                                 >
                                     AIGC + 设计
                                 </motion.h1>
                                 
-                                {/* 强制单行副标题：动态缩放绝不换行 */}
+                                {/* 强制单行副标题：同步放大比例，保持单行极限尺寸 */}
                                 <motion.h2 
                                     variants={fadeUpSpringVariant} 
                                     className="font-[800] tracking-tight leading-[1.1] mb-8 md:mb-10"
-                                    style={{ whiteSpace: 'nowrap', fontSize: 'clamp(18px, 5.5vw, 54px)' }}
+                                    style={{ whiteSpace: 'nowrap', fontSize: 'clamp(22px, 6.5vw, 54px)' }}
                                 >
                                     <span className="bg-gradient-text">空间与数字产品的美学实践</span>
                                 </motion.h2>
@@ -362,10 +368,10 @@
                                 </motion.div>
                             </motion.div>
 
-                            {/* 右侧头像区 - 移动端加入了 mx-auto 完美水平居中 */}
+                            {/* 右侧头像区 - 去除了手机端不必要的 mt-8 边距，直接向上提 */}
                             <motion.div 
                                 key={`home-img-${navKeys.home}`}
-                                className="relative flex-shrink-0 mx-auto lg:mx-0 mt-8 lg:mt-0"
+                                className="relative flex-shrink-0 mx-auto lg:mx-0 mt-2 lg:mt-0"
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ ...springDampingTransition, delay: 0.2 }}
