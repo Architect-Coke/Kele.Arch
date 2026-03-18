@@ -31,6 +31,14 @@
             -webkit-box-orient: vertical;  
             overflow: hidden;
         }
+        /* 隐藏滚动条但保留功能 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
 <body class="bg-white text-[#1D1D1F] antialiased selection:bg-indigo-100">
@@ -48,8 +56,10 @@
             const [navKeys, setNavKeys] = useState({ home: 0, about: 0, works: 0, contact: 0 });
             
             const [activeProject, setActiveProject] = useState(null);
-            // 用于控制图片点击全屏放大的状态
+            
+            // 全屏放大镜相关的状态
             const [lightboxImg, setLightboxImg] = useState(null);
+            const [lightboxScale, setLightboxScale] = useState(1);
 
             useEffect(() => {
                 const handleScroll = () => {
@@ -59,12 +69,17 @@
                 return () => window.removeEventListener('scroll', handleScroll);
             }, []);
 
-            // 当打开详情页、二维码、或放大图片时，锁定背景滚动
+            // 锁定背景滚动及重置缩放比例
             useEffect(() => {
                 if (activeProject || qrModal.isOpen || lightboxImg) {
                     document.body.style.overflow = 'hidden';
                 } else {
                     document.body.style.overflow = 'unset';
+                }
+                
+                // 当关闭大图时，重置缩放比例
+                if (!lightboxImg) {
+                    setLightboxScale(1);
                 }
                 return () => { document.body.style.overflow = 'unset'; }
             }, [activeProject, qrModal.isOpen, lightboxImg]);
@@ -73,17 +88,15 @@
                 lucide.createIcons();
             });
 
-            // ================= 新增：智能占位图处理函数 =================
-            // 当图片加载失败时，自动提取原路径中的文件名，并生成对应尺寸的精美色块
+            // 智能占位图处理函数
             const handleImageError = (e, fallbackSize = '800x600') => {
                 const originalSrc = e.target.getAttribute('src');
                 let text = "Image";
                 if (originalSrc) {
                     const parts = originalSrc.split('/');
-                    text = decodeURIComponent(parts[parts.length - 1]); // 提取带后缀的文件名
+                    text = decodeURIComponent(parts[parts.length - 1]); 
                 }
-                e.target.onerror = null; // 防止自身加载失败造成死循环
-                // 使用占位图服务生成色块：底色浅蓝 EEF2FF，文字颜色 5D5FEF
+                e.target.onerror = null; 
                 e.target.src = `https://placehold.co/${fallbackSize}/EEF2FF/5D5FEF?text=${encodeURIComponent(text)}`;
             };
 
@@ -116,6 +129,17 @@
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }
                 setIsMenuOpen(false);
+            };
+
+            // 大图查看器的滚轮缩放事件
+            const handleWheelZoom = (e) => {
+                e.preventDefault();
+                const zoomSensitivity = 0.002; // 调整滚轮的敏感度
+                setLightboxScale(prev => {
+                    const newScale = prev - e.deltaY * zoomSensitivity;
+                    // 限制缩放级别在 0.5 到 5 倍之间
+                    return Math.min(Math.max(0.5, newScale), 5);
+                });
             };
 
             const springDampingTransition = {
@@ -170,7 +194,7 @@
                     description: "基于Stable Diffusion 及 Nanobanana 工作流的建筑空间生成。", 
                     fullDescription: "探索AI辅助建筑设计的前沿边界。本系列作品主要展示基于 Stable Diffusion 结合 Nanobanana 创新工作流的建筑空间概念生成。旨在突破传统设计的灵感瓶颈，实现从文本语言到高品质建筑可视化展板的快速转化。",
                     tags: ["SD", "Nanobanana"],
-                    customContent: true, // 开启定制画廊内容标记
+                    customContent: true, 
                     subCategory: "Nanobanana+建筑展板设计",
                     gridImages: [
                         "images/AI建筑案例1-01.jpg",
@@ -340,7 +364,6 @@
                     <section id="home" className="relative pt-24 md:pt-28 lg:pt-32 pb-20 px-6 md:px-16 min-h-[90vh] flex items-center overflow-hidden">
                         <div className="max-w-[1400px] mx-auto w-full flex flex-col-reverse lg:flex-row items-center justify-between gap-8 lg:gap-16">
                             
-                            {/* 左侧文字区 */}
                             <motion.div 
                                 key={`home-text-${navKeys.home}`}
                                 className="flex-1 text-left z-10 w-full"
@@ -391,7 +414,6 @@
                                 </motion.div>
                             </motion.div>
 
-                            {/* 右侧头像区 */}
                             <motion.div 
                                 key={`home-img-${navKeys.home}`}
                                 className="relative flex-shrink-0 mx-auto lg:mx-0 mt-2 lg:mt-0"
@@ -405,7 +427,6 @@
                                     whileHover={{ scale: 1.02 }}
                                     transition={{ duration: 0.3, ease: "easeOut" }}
                                 >
-                                    {/* 新增了 onError 回调 */}
                                     <img 
                                         src="images/3;4.jpg" 
                                         alt="Architect Kele" 
@@ -535,7 +556,6 @@
                                         className="group cursor-pointer bg-white rounded-[1.5rem] overflow-hidden shadow-sm hover:shadow-[0_15px_40px_rgba(0,0,0,0.18)] hover:-translate-y-1 transition-all duration-300 border border-neutral-100 flex flex-col"
                                     >
                                         <div className="w-full aspect-[4/3] bg-neutral-100 overflow-hidden relative">
-                                            {/* 新增了 onError 回调 */}
                                             <img 
                                                 src={p.image} 
                                                 className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110" 
@@ -671,7 +691,7 @@
                         </AnimatePresence>
                     </section>
 
-                    {/* 作品详情页 */}
+                    {/* ================= 作品详情页 ================= */}
                     <AnimatePresence>
                         {activeProject && (
                             <motion.div 
@@ -681,7 +701,6 @@
                                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
                                 className="fixed inset-0 z-[120] bg-[#F8F9FA]"
                             >
-                                {/* 右上角固定关闭按钮 (X) */}
                                 <button 
                                     onClick={() => setActiveProject(null)} 
                                     className="absolute top-4 right-4 md:top-8 md:right-8 w-10 h-10 md:w-12 md:h-12 bg-white/80 backdrop-blur-md border border-neutral-100 shadow-lg rounded-full flex items-center justify-center text-neutral-500 hover:text-[#1D1D1F] hover:bg-neutral-50 transition-all z-20"
@@ -689,7 +708,6 @@
                                     <i data-lucide="x" className="w-5 h-5"></i>
                                 </button>
 
-                                {/* 右下角固定返回按钮 */}
                                 <button 
                                     onClick={() => setActiveProject(null)} 
                                     className="absolute bottom-8 right-8 md:bottom-12 md:right-12 px-5 md:px-6 py-3 md:py-3.5 bg-[#1D1D1F]/90 backdrop-blur-md text-white text-[13px] md:text-[14px] font-medium rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.2)] hover:bg-[#5D5FEF] transition-all hover:-translate-y-1 active:scale-95 flex items-center gap-2 group z-20"
@@ -699,9 +717,10 @@
                                 </button>
 
                                 {/* 滚动内容区域 */}
-                                <div className="absolute inset-0 overflow-y-auto z-10">
+                                <div className="absolute inset-0 overflow-y-auto no-scrollbar z-10">
                                     <div className="bg-white border-b border-neutral-100">
-                                        <div className="max-w-[1200px] mx-auto pt-12 md:pt-20 pb-12 px-6 md:px-16">
+                                        {/* 【优化点1】: 扩大了头部文字容器的最大宽度 1400px，缩减左右留白为 px-4 md:px-8 */}
+                                        <div className="max-w-[1400px] mx-auto pt-12 md:pt-20 pb-10 px-4 md:px-8">
                                             <button 
                                                 onClick={() => setActiveProject(null)} 
                                                 className="inline-flex items-center gap-2 text-[14px] text-neutral-500 hover:text-[#1D1D1F] transition-colors font-medium mb-10"
@@ -717,35 +736,31 @@
                                         </div>
                                     </div>
 
-                                    {/* 长图/网格内容区 */}
-                                    <div className="max-w-[1200px] mx-auto py-12 md:py-16 px-6 md:px-16 flex flex-col gap-10 md:gap-16 pb-32">
+                                    {/* 【优化点1】: 长图/网格内容区最大宽度扩至 1400px，缩减 padding */}
+                                    <div className="max-w-[1400px] mx-auto py-10 md:py-12 px-4 md:px-8 flex flex-col gap-6 md:gap-10 pb-32">
                                         
                                         {activeProject.customContent ? (
-                                            <div className="flex flex-col gap-8 w-full">
+                                            <div className="flex flex-col gap-6 md:gap-8 w-full">
                                                 <div className="pb-3 border-b-2 border-neutral-100">
                                                     <h3 className="text-xl md:text-2xl font-black text-[#1D1D1F] border-l-[5px] border-[#5D5FEF] pl-4 leading-tight">{activeProject.subCategory}</h3>
                                                 </div>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mt-4">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mt-2">
                                                     {activeProject.gridImages.map((imgUrl, idx) => (
                                                         <motion.div
                                                             key={idx}
-                                                            whileHover={{ scale: 1.03, y: -5 }}
-                                                            className="cursor-zoom-in rounded-[1rem] overflow-hidden shadow-sm hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] border border-neutral-100 bg-white transition-all duration-300"
+                                                            whileHover={{ scale: 1.02, y: -5 }}
+                                                            className="cursor-zoom-in rounded-[1rem] overflow-hidden shadow-sm hover:shadow-[0_20px_40px_rgba(0,0,0,0.15)] border border-neutral-100 bg-white transition-all duration-300 relative group"
                                                             onClick={() => setLightboxImg(imgUrl)}
                                                         >
-                                                            {/* 新增了 onError 回调 */}
+                                                            {/* 【优化点2】: 去除了图片下方的“查看大图”文字和放大镜栏，呈现极致干净的纯画廊 */}
                                                             <img 
                                                                 src={imgUrl} 
                                                                 alt={`展板设计 ${idx + 1}`} 
-                                                                className="w-full h-auto block object-cover aspect-[3/4]"
+                                                                className="w-full h-auto block object-cover"
                                                                 onError={(e) => handleImageError(e, '800x1200')}
                                                             />
-                                                            <div className="p-4 bg-white flex items-center justify-between">
-                                                                <span className="text-[13px] font-bold text-neutral-800">查看大图</span>
-                                                                <div className="w-6 h-6 rounded-full bg-neutral-50 flex items-center justify-center text-neutral-400">
-                                                                    <i data-lucide="zoom-in" className="w-3.5 h-3.5"></i>
-                                                                </div>
-                                                            </div>
+                                                            {/* 悬浮时微弱的遮罩交互提示，替代了底部文字 */}
+                                                            <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                                                         </motion.div>
                                                     ))}
                                                 </div>
@@ -759,14 +774,13 @@
                                                     whileInView={{ opacity: 1, y: 0 }}
                                                     viewport={{ once: true, margin: "-100px" }}
                                                     transition={{ duration: 0.6, ease: "easeOut" }}
-                                                    className="w-full bg-white rounded-2xl md:rounded-[1.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.06)] overflow-hidden border border-neutral-100"
+                                                    className="w-full bg-white rounded-xl md:rounded-[1.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.06)] overflow-hidden border border-neutral-100"
                                                 >
-                                                    {/* 新增了 onError 回调 */}
                                                     <img 
                                                         src={imgUrl} 
                                                         alt={`${activeProject.title} 展示图 ${idx + 1}`} 
                                                         className="w-full h-auto block"
-                                                        onError={(e) => handleImageError(e, '1200x800')}
+                                                        onError={(e) => handleImageError(e, '1400x900')}
                                                     />
                                                 </motion.div>
                                             ))
@@ -778,7 +792,7 @@
                         )}
                     </AnimatePresence>
 
-                    {/* 图片放大查看器 (Lightbox) */}
+                    {/* ================= 图片放大查看器 (Lightbox) 支持缩放与拖拽 ================= */}
                     <AnimatePresence>
                         {lightboxImg && (
                             <motion.div 
@@ -786,26 +800,45 @@
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                                 transition={{ duration: 0.25 }}
-                                className="fixed inset-0 bg-[#0f0f11]/95 backdrop-blur-sm z-[200] flex items-center justify-center p-4 md:p-10 cursor-zoom-out"
+                                className="fixed inset-0 bg-[#0f0f11]/95 backdrop-blur-md z-[200] flex items-center justify-center overflow-hidden"
                                 onClick={() => setLightboxImg(null)}
+                                onWheel={handleWheelZoom} /* 【优化点3】: 绑定鼠标滚轮缩放事件 */
                             >
+                                {/* 提示文字：支持滚轮缩放 */}
+                                <div className="absolute top-6 left-1/2 -translate-x-1/2 text-white/50 text-sm font-medium tracking-widest pointer-events-none z-50 bg-black/30 px-4 py-2 rounded-full backdrop-blur-sm flex items-center gap-2">
+                                    <i data-lucide="mouse" className="w-4 h-4"></i> 滚轮缩放 / 拖拽查看
+                                </div>
+
                                 <button 
                                     className="absolute top-6 right-6 md:top-10 md:right-10 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full text-white flex items-center justify-center transition-colors z-50 backdrop-blur-md"
                                     onClick={() => setLightboxImg(null)}
                                 >
                                     <i data-lucide="x" className="w-6 h-6"></i>
                                 </button>
-                                <motion.img 
-                                    initial={{ scale: 0.9, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    exit={{ scale: 0.9, opacity: 0 }}
-                                    transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                                    src={lightboxImg} 
-                                    alt="放大查看" 
-                                    className="max-w-full max-h-full object-contain cursor-default shadow-[0_20px_60px_rgba(0,0,0,0.5)] rounded-md"
+                                
+                                {/* 内部的拖拽容器，点击不关闭灯箱 */}
+                                <motion.div 
+                                    className="relative w-full h-full flex items-center justify-center"
                                     onClick={(e) => e.stopPropagation()}
-                                    onError={(e) => handleImageError(e, '1200x1200')}
-                                />
+                                >
+                                    <motion.img 
+                                        drag={lightboxScale > 1} /* 【优化点3】: 放大时支持自由拖拽平移 */
+                                        dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
+                                        dragElastic={0.1}
+                                        initial={{ scale: 0.9, opacity: 0 }}
+                                        animate={{ scale: lightboxScale, opacity: 1 }}
+                                        exit={{ scale: 0.9, opacity: 0 }}
+                                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                                        src={lightboxImg} 
+                                        alt="放大查看" 
+                                        className={`max-w-[95vw] max-h-[95vh] object-contain shadow-[0_20px_60px_rgba(0,0,0,0.5)] rounded-md pointer-events-auto ${lightboxScale > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
+                                        onError={(e) => handleImageError(e, '1200x1200')}
+                                        onClick={(e) => {
+                                            // 点击图片如果还没放大，就默认放大到 2倍
+                                            if (lightboxScale <= 1) setLightboxScale(2);
+                                        }}
+                                    />
+                                </motion.div>
                             </motion.div>
                         )}
                     </AnimatePresence>
