@@ -162,7 +162,7 @@
                                         )}
                                     </AnimatePresence>
 
-                                    {/* 新增：抖音视频跳转图标 */}
+                                    {/* 新增：抖音视频跳转图标与播放量 */}
                                     {item.douyinLink !== undefined && (
                                         <div 
                                             className={`absolute bottom-3 left-3 md:bottom-5 md:left-5 z-30 transition-opacity duration-300 ${isCenter ? 'opacity-100' : 'opacity-40'}`}
@@ -176,12 +176,17 @@
                                             }}
                                         >
                                             <button 
-                                                className={`flex items-center justify-center w-9 h-9 md:w-12 md:h-12 bg-black/40 backdrop-blur-md rounded-full text-white border border-white/20 shadow-lg ${isCenter ? 'hover:bg-[#1D1D1F] hover:scale-110 active:scale-95 transition-all' : ''}`}
-                                                title="去抖音看视频"
+                                                className={`flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-4 h-8 md:h-10 bg-black/40 backdrop-blur-md rounded-full text-white border border-white/20 shadow-lg ${isCenter && item.douyinLink ? 'hover:bg-[#1D1D1F] hover:scale-105 active:scale-95 transition-all cursor-pointer' : (isCenter ? 'cursor-default' : '')}`}
+                                                title={item.douyinLink ? "去抖音看视频" : "播放量"}
                                             >
-                                                <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 448 512" fill="currentColor">
+                                                <svg className="w-3.5 h-3.5 md:w-[18px] md:h-[18px] shrink-0" viewBox="0 0 448 512" fill="currentColor">
                                                     <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z"/>
                                                 </svg>
+                                                {item.playCount && (
+                                                    <span className="text-[12px] md:text-[14px] font-bold tracking-wide mt-[1px]">
+                                                        {item.playCount}
+                                                    </span>
+                                                )}
                                             </button>
                                         </div>
                                     )}
@@ -661,18 +666,18 @@
                         {
                             title: "Midjourney+动画教程2023",
                             images: [
-                                { thumb: "images/MJ/MJ01.webp", full: "images/MJ/MJ01.webp", douyinLink: "https://v.douyin.com/CKimWdaX8j4/" },
-                                { thumb: "images/MJ/MJ02.webp", full: "images/MJ/MJ02.webp", douyinLink: "" },
-                                { thumb: "images/MJ/MJ03.webp", full: "images/MJ/MJ03.webp", douyinLink: "" },
-                                { thumb: "images/MJ/MJ04.webp", full: "images/MJ/MJ04.webp", douyinLink: "" },
-                                { thumb: "images/MJ/MJ05.webp", full: "images/MJ/MJ05.webp", douyinLink: "" },
-                                { thumb: "images/MJ/MJ06.webp", full: "images/MJ/MJ06.webp", douyinLink: "" },
-                                { thumb: "images/MJ/MJ07.webp", full: "images/MJ/MJ07.webp", douyinLink: "" },
-                                { thumb: "images/MJ/MJ08.webp", full: "images/MJ/MJ08.webp", douyinLink: "" },
-                                { thumb: "images/MJ/MJ09.webp", full: "images/MJ/MJ09.webp", douyinLink: "" },
-                                { thumb: "images/MJ/MJ10.webp", full: "images/MJ/MJ10.webp", douyinLink: "" },
-                                { thumb: "images/MJ/MJ11.webp", full: "images/MJ/MJ11.webp", douyinLink: "" },
-                                { thumb: "images/MJ/MJ12.webp", full: "images/MJ/MJ12.webp", douyinLink: "" }
+                                { thumb: "images/MJ/MJ01.webp", full: "images/MJ/MJ01.webp", douyinLink: "https://v.douyin.com/wVU2LkD56xI/", playCount: "22.4万" },
+                                { thumb: "images/MJ/MJ02.webp", full: "images/MJ/MJ02.webp", douyinLink: "https://v.douyin.com/7Jl1lLDRFik/", playCount: "3.2万" },
+                                { thumb: "images/MJ/MJ03.webp", full: "images/MJ/MJ03.webp", douyinLink: "https://v.douyin.com/XOSaMubr1jI/", playCount: "19万" },
+                                { thumb: "images/MJ/MJ04.webp", full: "images/MJ/MJ04.webp", douyinLink: "https://v.douyin.com/H-47mINGKpk/", playCount: "2.4万" },
+                                { thumb: "images/MJ/MJ05.webp", full: "images/MJ/MJ05.webp", douyinLink: "https://v.douyin.com/F8E57wZ7H_4/", playCount: "2.6万" },
+                                { thumb: "images/MJ/MJ06.webp", full: "images/MJ/MJ06.webp", douyinLink: "https://v.douyin.com/RnuxrwEpWjU/", playCount: "2.4万" },
+                                { thumb: "images/MJ/MJ07.webp", full: "images/MJ/MJ07.webp", douyinLink: "https://v.douyin.com/XmORNZgrJn4/", playCount: "3.6万" },
+                                { thumb: "images/MJ/MJ08.webp", full: "images/MJ/MJ08.webp", douyinLink: "https://v.douyin.com/GDikdwEB2cM/", playCount: "6.9万" },
+                                { thumb: "images/MJ/MJ09.webp", full: "images/MJ/MJ09.webp", douyinLink: "https://v.douyin.com/cc9mM9yGz10/", playCount: "2.6万" },
+                                { thumb: "images/MJ/MJ10.webp", full: "images/MJ/MJ10.webp", douyinLink: "https://v.douyin.com/TAqF56Aeszc/", playCount: "1.5万" },
+                                { thumb: "images/MJ/MJ11.webp", full: "images/MJ/MJ11.webp", douyinLink: "https://v.douyin.com/G3UgwARCRjs/", playCount: "5.1万" },
+                                { thumb: "images/MJ/MJ12.webp", full: "images/MJ/MJ12.webp", douyinLink: "https://v.douyin.com/eE3D0ig7J-A/", playCount: "0.4万" }
                             ]
                         }
                     ]
