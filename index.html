@@ -223,7 +223,7 @@
                                         </div>
                                     )}
 
-                                    {/* 新增：兼容抖音/小红书 视频跳转图标与播放量 */}
+                                    {/* 兼容抖音/小红书 视频跳转图标与播放量 */}
                                     {(item.douyinLink !== undefined || item.xhsLink !== undefined) && (
                                         <div 
                                             className={`absolute bottom-3 left-3 md:bottom-5 md:left-5 z-30 transition-opacity duration-300 ${isCenter ? 'opacity-100' : 'opacity-40'}`}
@@ -523,6 +523,103 @@
         };
         // ================= 手风琴组件结束 =================
 
+        // ================= 新增：专属 1:1 正方形画廊组件 (SquareGallerySlider) =================
+        const SquareGallerySlider = ({ items, onImageClick }) => {
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % items.length);
+            const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
+
+            const getVariant = (idx) => {
+                const diff = (idx - currentIndex + items.length) % items.length;
+                if (diff === 0) return 'center';
+                if (diff === 1) return 'right';
+                if (diff === items.length - 1) return 'left';
+                return 'hidden'; 
+            };
+
+            const variants = {
+                center: { x: "0%", scale: 1, zIndex: 10, opacity: 1, filter: "brightness(100%)", boxShadow: "0 30px 60px -12px rgba(0,0,0,0.3)" },
+                left: { x: "-90%", scale: 0.88, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
+                right: { x: "90%", scale: 0.88, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
+                hidden: { x: "0%", scale: 0.5, zIndex: 0, opacity: 0, transition: { duration: 0.2 }, boxShadow: "0 0px 0px rgba(0,0,0,0)" }
+            };
+
+            return (
+                <div className="relative w-full h-[65vh] md:h-[85vh] flex flex-col items-center justify-center py-4 mt-2">
+                    <div className="relative w-full max-w-[1400px] h-full flex items-center justify-center">
+                        {items.map((item, idx) => {
+                            const variant = getVariant(idx);
+                            const isCenter = variant === 'center';
+                            const isSide = variant === 'left' || variant === 'right';
+                            const thumbUrl = item.thumb || item;
+                            const fullUrl = item.full || item;
+
+                            return (
+                                <motion.div
+                                    key={idx}
+                                    variants={variants}
+                                    initial={false}
+                                    animate={variant}
+                                    whileHover={
+                                        isCenter 
+                                            ? { scale: 1.02 } 
+                                            : isSide 
+                                                ? { scale: 0.92, x: variant === 'left' ? "-98%" : "98%", opacity: 0.95, filter: "brightness(100%)", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)" } 
+                                                : {}
+                                    }
+                                    transition={{ type: "spring", stiffness: 250, damping: 25, mass: 0.8 }}
+                                    className={`absolute w-[92%] sm:w-[75%] md:w-[60%] lg:w-[48%] aspect-square bg-white rounded-2xl md:rounded-[2rem] overflow-hidden cursor-pointer ${isCenter ? 'ring-[6px] md:ring-[8px] ring-white/90 shadow-2xl' : ''}`}
+                                    onClick={() => {
+                                        if (isCenter && onImageClick) onImageClick(fullUrl);
+                                        else if (variant === 'left') prevSlide();
+                                        else if (variant === 'right') nextSlide();
+                                    }}
+                                    drag={isCenter ? "x" : false}
+                                    dragConstraints={{ left: 0, right: 0 }}
+                                    dragElastic={0.2}
+                                    onDragEnd={(e, { offset }) => {
+                                        if (offset.x < -50) nextSlide();
+                                        else if (offset.x > 50) prevSlide();
+                                    }}
+                                >
+                                    <img 
+                                        src={thumbUrl} 
+                                        className="w-full h-full object-contain p-4 md:p-8 pointer-events-none transition-opacity duration-500"
+                                        alt="Gallery item" 
+                                        loading="lazy"
+                                        onError={(e) => {
+                                            const parts = (thumbUrl).split('/');
+                                            const text = decodeURIComponent(parts[parts.length - 1]); 
+                                            e.target.onerror = null; 
+                                            e.target.src = `https://placehold.co/800x800/EEF2FF/5D5FEF?text=${encodeURIComponent(text)}`;
+                                        }}
+                                    />
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                    
+                    <button onClick={prevSlide} className="absolute left-4 md:left-10 lg:left-16 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/50 backdrop-blur-sm border border-white/20 shadow-md flex items-center justify-center text-neutral-800 hover:text-black hover:bg-white/60 hover:scale-110 active:bg-white/80 active:scale-95 transition-all duration-300 z-20">
+                        <i data-lucide="chevron-left" className="w-5 h-5 md:w-6 md:h-6"></i>
+                    </button>
+                    <button onClick={nextSlide} className="absolute right-4 md:right-10 lg:right-16 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/50 backdrop-blur-sm border border-white/20 shadow-md flex items-center justify-center text-neutral-800 hover:text-black hover:bg-white/60 hover:scale-110 active:bg-white/80 active:scale-95 transition-all duration-300 z-20">
+                        <i data-lucide="chevron-right" className="w-5 h-5 md:w-6 md:h-6"></i>
+                    </button>
+
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-2 md:gap-3 z-20">
+                        {items.map((_, idx) => (
+                            <button 
+                                key={idx} 
+                                onClick={() => setCurrentIndex(idx)}
+                                className={`h-1.5 md:h-2 rounded-full transition-all duration-500 ${idx === currentIndex ? 'bg-[#5D5FEF] w-8 md:w-12 shadow-sm' : 'bg-neutral-300 hover:bg-neutral-400 w-2 md:w-2.5'}`}
+                            />
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+        // ================= 正方形专属轮播组件结束 =================
+
         const App = () => {
             const [isScrolled, setIsScrolled] = useState(false);
             const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -677,12 +774,12 @@
                     customContent: true,
                     sections: [
                         {
-                            title: "产品交互与页面设计",
-                            type: "simple-slider", 
+                            title: "智慧园区、楼盘、酒店系统产品", // 新案例名称 (无"设计"两字)
+                            type: "square-gallery", // 调用完美的 1:1 正方形画廊
                             images: [
-                                "images/交互与产品设计/可乐交互案例 (1).webp",
-                                "images/交互与产品设计/可乐交互案例 (2).webp",
-                                "images/交互与产品设计/可乐交互案例 (3).webp"
+                                { thumb: "images/交互与产品设计/可乐交互案例 (1).webp", full: "images/交互与产品设计/可乐交互案例 (1).webp" },
+                                { thumb: "images/交互与产品设计/可乐交互案例 (2).webp", full: "images/交互与产品设计/可乐交互案例 (2).webp" },
+                                { thumb: "images/交互与产品设计/可乐交互案例 (3).webp", full: "images/交互与产品设计/可乐交互案例 (3).webp" }
                             ]
                         }
                     ]
@@ -1367,7 +1464,9 @@
                                                         </div>
                                                         
                                                         {/* 根据 section 的 type 选择组件 */}
-                                                        {section.type === 'accordion' ? (
+                                                        {section.type === 'square-gallery' ? (
+                                                            <SquareGallerySlider items={section.images} onImageClick={setLightboxImg} />
+                                                        ) : section.type === 'accordion' ? (
                                                             <AccordionSlider items={section.images} onVideoClick={setLightboxVideo} />
                                                         ) : section.type === 'simple-slider' ? (
                                                             <SimpleSlider items={section.images} onImageClick={setLightboxImg} />
