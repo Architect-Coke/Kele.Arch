@@ -45,7 +45,8 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        // 增加引入 useRef
+        const { useState, useEffect, useRef } = React;
         const { motion, AnimatePresence } = window.Motion;
 
         // ================= 3D 卡片轮播组件 =================
@@ -175,6 +176,108 @@
             );
         };
         // ================= 轮播组件结束 =================
+
+        // ================= 新增：手风琴卡片轮播组件 (AccordionSlider) =================
+        const AccordionSlider = ({ items }) => {
+            const [activeIndex, setActiveIndex] = useState(0);
+            const hoverTimeoutRef = useRef(null); // 用于存储定时器
+
+            // 处理鼠标移入：设置 1 秒后自动展开
+            const handleMouseEnter = (idx) => {
+                if (hoverTimeoutRef.current) {
+                    clearTimeout(hoverTimeoutRef.current);
+                }
+                hoverTimeoutRef.current = setTimeout(() => {
+                    setActiveIndex(idx);
+                }, 1000); // 1000毫秒 = 1秒
+            };
+
+            // 处理鼠标移出：取消尚未触发的展开
+            const handleMouseLeave = () => {
+                if (hoverTimeoutRef.current) {
+                    clearTimeout(hoverTimeoutRef.current);
+                }
+            };
+
+            return (
+                <div className="w-full flex h-[50vh] md:h-[65vh] gap-2 md:gap-4 mt-2" onMouseLeave={handleMouseLeave}>
+                    {items.map((item, idx) => {
+                        const isActive = activeIndex === idx;
+                        const thumbUrl = item.thumb || item;
+                        const videoUrl = item.video;
+
+                        return (
+                            <div
+                                key={idx}
+                                onClick={() => {
+                                    setActiveIndex(idx);
+                                    // 点击时立刻展开，并清除可能正在计时的悬停定时器
+                                    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+                                }}
+                                onMouseEnter={() => handleMouseEnter(idx)}
+                                onMouseLeave={handleMouseLeave}
+                                className={`relative cursor-pointer overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] ${
+                                    isActive ? 'flex-1 rounded-3xl md:rounded-[2rem]' : 'w-14 md:w-24 rounded-[3rem]'
+                                }`}
+                                style={{ backgroundColor: '#111' }}
+                            >
+                                {/* 背景图片 (未激活或无视频时显示) */}
+                                <img 
+                                    src={thumbUrl} 
+                                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${isActive && videoUrl ? 'opacity-0' : 'opacity-70'}`} 
+                                    alt="Gallery item"
+                                    onError={(e) => {
+                                        e.target.onerror = null; 
+                                        e.target.src = `https://placehold.co/600x800/1D1D1F/5D5FEF?text=${idx + 1}`;
+                                    }}
+                                />
+
+                                {/* 激活时播放的视频 */}
+                                {isActive && videoUrl && (
+                                    <video
+                                        src={videoUrl}
+                                        autoPlay
+                                        loop
+                                        muted
+                                        playsInline
+                                        className="absolute inset-0 w-full h-full object-cover z-10"
+                                    />
+                                )}
+
+                                {/* 底部深色渐变遮罩 (增强文字对比度) */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-20 pointer-events-none transition-opacity duration-500"></div>
+
+                                {/* 内容区：编号 + 标题描述 */}
+                                <div className="absolute inset-x-0 bottom-0 p-4 md:p-8 flex items-end gap-4 md:gap-6 z-30">
+                                    {/* 圆形编号指示器 */}
+                                    <div className={`shrink-0 flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/20 backdrop-blur-md text-white font-bold text-sm md:text-base border border-white/20 transition-all duration-500 shadow-lg ${!isActive && 'mx-auto mb-2 md:mb-4'}`}>
+                                        {idx + 1}
+                                    </div>
+                                    
+                                    {/* 展开后的文字信息 */}
+                                    {isActive && (
+                                        <motion.div 
+                                            initial={{ opacity: 0, y: 15 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.3, duration: 0.5 }}
+                                            className="flex-1 min-w-0"
+                                        >
+                                            <h3 className="text-lg md:text-2xl font-black text-white uppercase tracking-widest mb-1.5 truncate">
+                                                {item.itemTitle || `ANIMATION ${idx + 1}`}
+                                            </h3>
+                                            <p className="text-xs md:text-sm text-white/70 line-clamp-1 md:line-clamp-2">
+                                                {item.itemDesc || 'Explore the dynamic visual content and motion graphics.'}
+                                            </p>
+                                        </motion.div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        };
+        // ================= 手风琴组件结束 =================
 
         const App = () => {
             const [isScrolled, setIsScrolled] = useState(false);
@@ -417,7 +520,47 @@
                         }
                     ]
                 },
-                { id: 4, title: "AIGC 动态影像", image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=600", description: "探索 AI 技术在动态影像领域的应用，打造高品质的视觉内容与运动图形。", tags: ["动态影像", "视频制作", "运动图形"] },
+                { 
+                    id: 4, 
+                    title: "AIGC 动态影像", 
+                    image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=600", 
+                    description: "探索 AI 技术在动态影像领域的应用，打造高品质的视觉内容与运动图形。", 
+                    fullDescription: "探索 AI 技术在动态影像领域的应用，打造高品质的视觉内容与运动图形。结合最新 AI 视频生成大模型，实现从静态视觉到动态叙事的跨越，赋予设计灵感以鲜活的生命力。",
+                    tags: ["动态影像", "视频制作", "运动图形"],
+                    customContent: true,
+                    sections: [
+                        {
+                            title: "Seedance+动画",
+                            type: "accordion", // 标记这里使用手风琴特效
+                            images: [
+                                { 
+                                    thumb: "images/seedance01_thumb.jpg", 
+                                    video: "images/seedance01.mp4", 
+                                    itemTitle: "DYNAMIC VISION", 
+                                    itemDesc: "网页视频特效展示，探索视觉边界与无限可能" 
+                                },
+                                { 
+                                    thumb: "images/seedance02_thumb.jpg", 
+                                    video: "images/seedance02.mp4", 
+                                    itemTitle: "DIGITAL TECHNOLOGY", 
+                                    itemDesc: "Gets better every day - stay tuned for the future" 
+                                },
+                                { 
+                                    thumb: "images/seedance03_thumb.jpg", 
+                                    video: "images/seedance03.mp4", 
+                                    itemTitle: "GLOBALIZATION", 
+                                    itemDesc: "Help people all over the world connect and thrive" 
+                                },
+                                { 
+                                    thumb: "images/seedance04_thumb.jpg", 
+                                    video: "images/seedance04.mp4", 
+                                    itemTitle: "NEW TECHNOLOGIES", 
+                                    itemDesc: "Space engineering becomes more and more advanced" 
+                                }
+                            ]
+                        }
+                    ]
+                },
                 { 
                     id: 1, 
                     title: "交互与沉浸体验", 
@@ -964,11 +1107,12 @@
                                                             <h3 className="text-xl md:text-2xl font-black text-[#1D1D1F] border-l-[5px] border-[#5D5FEF] pl-4 leading-tight">{section.title}</h3>
                                                         </div>
                                                         
-                                                        {/* 渲染独立封装的轮播组件，由于有独立的状态，多个画廊互相不干扰 */}
-                                                        <GallerySlider 
-                                                            items={section.images} 
-                                                            onImageClick={setLightboxImg} 
-                                                        />
+                                                        {/* 根据 section 的 type 选择使用哪种酷炫画廊组件 */}
+                                                        {section.type === 'accordion' ? (
+                                                            <AccordionSlider items={section.images} />
+                                                        ) : (
+                                                            <GallerySlider items={section.images} onImageClick={setLightboxImg} />
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
