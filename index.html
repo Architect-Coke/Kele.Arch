@@ -45,19 +45,41 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        // 增加引入 useRef
         const { useState, useEffect, useRef } = React;
         const { motion, AnimatePresence } = window.Motion;
 
         // ================= 3D 卡片轮播组件 =================
-        const GallerySlider = ({ items, onImageClick }) => {
+        const GallerySlider = ({ items, onImageClick, onVideoClick }) => {
             const [currentIndex, setCurrentIndex] = useState(0);
-            const [hoveredCard, setHoveredCard] = useState(null); // 新增：用于追踪当前悬停卡片的状态
+            
+            // 新增：视频播放状态和静音控制
+            const [playingIndex, setPlayingIndex] = useState(null);
+            const [isMuted, setIsMuted] = useState(false); 
+            const videoRefs = useRef({});
 
             const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % items.length);
             const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
 
-            // 计算当前卡片在轮播中的相对位置
+            // 处理当前中心卡片切换时，自动暂停视频
+            useEffect(() => {
+                setPlayingIndex(null);
+            }, [currentIndex]);
+
+            // 监听播放状态，控制对应 video DOM
+            useEffect(() => {
+                const video = videoRefs.current[currentIndex];
+                if (video) {
+                    if (playingIndex === currentIndex) {
+                        const playPromise = video.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(() => {});
+                        }
+                    } else {
+                        video.pause();
+                    }
+                }
+            }, [playingIndex, currentIndex]);
+
             const getVariant = (idx) => {
                 const diff = (idx - currentIndex + items.length) % items.length;
                 if (diff === 0) return 'center';
@@ -68,14 +90,12 @@
 
             const variants = {
                 center: { x: "0%", scale: 1, zIndex: 10, opacity: 1, filter: "brightness(100%)", boxShadow: "0 30px 60px -12px rgba(0,0,0,0.3)" },
-                // 【优化】：将手机端的侧边卡片往外多推一点 (-90% / 90%)，比例微调至 0.82，给主卡片让出空间
-                left: { x: "-90%", scale: 0.82, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
-                right: { x: "90%", scale: 0.82, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
+                left: { x: "-90%", scale: 0.88, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
+                right: { x: "90%", scale: 0.88, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
                 hidden: { x: "0%", scale: 0.5, zIndex: 0, opacity: 0, transition: { duration: 0.2 }, boxShadow: "0 0px 0px rgba(0,0,0,0)" }
             };
 
             return (
-                // 【优化】：稍微调高了手机端的高度 h-[65vh]，防止大卡片被裁切
                 <div className="relative w-full h-[65vh] md:h-[85vh] flex flex-col items-center justify-center py-4 mt-2">
                     <div className="relative w-full max-w-[1400px] h-full flex items-center justify-center">
                         {items.map((item, idx) => {
@@ -84,6 +104,7 @@
                             const isSide = variant === 'left' || variant === 'right';
                             const thumbUrl = item.thumb || item;
                             const fullUrl = item.full || item;
+                            const isVideoActive = playingIndex === idx;
 
                             return (
                                 <motion.div
@@ -91,15 +112,13 @@
                                     variants={variants}
                                     initial={false}
                                     animate={variant}
-                                    onHoverStart={() => setHoveredCard(idx)} // 鼠标移入时记录卡片索引
-                                    onHoverEnd={() => setHoveredCard(null)}  // 鼠标移出时清除记录
                                     whileHover={
                                         isCenter 
                                             ? { scale: 1.02 } 
                                             : isSide 
                                                 ? { 
-                                                    scale: 0.88, 
-                                                    x: variant === 'left' ? "-98%" : "98%", // 悬停侧边卡片时往外弹得更开
+                                                    scale: 0.92, 
+                                                    x: variant === 'left' ? "-98%" : "98%", 
                                                     opacity: 0.95, 
                                                     filter: "brightness(100%)", 
                                                     boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)" 
@@ -107,10 +126,16 @@
                                                 : {}
                                     }
                                     transition={{ type: "spring", stiffness: 250, damping: 25, mass: 0.8 }}
-                                    // 【核心优化】：将最基础的 width 从 w-[70%] 改为 w-[84%]，大幅增加手机端卡片占比！平板以上保持不变
                                     className={`absolute w-[84%] sm:w-[70%] md:w-[50%] lg:w-[38%] aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer ${isCenter ? 'ring-[6px] md:ring-[8px] ring-white/90' : ''}`}
                                     onClick={() => {
-                                        if (isCenter) onImageClick(fullUrl);
+                                        if (isCenter) {
+                                            // 修改：如果是视频，点击切换播放状态；如果是图片，点击放大
+                                            if (item.video) {
+                                                setPlayingIndex(playingIndex === idx ? null : idx);
+                                            } else if (onImageClick) {
+                                                onImageClick(fullUrl);
+                                            }
+                                        }
                                         else if (variant === 'left') prevSlide();
                                         else if (variant === 'right') nextSlide();
                                     }}
@@ -124,7 +149,7 @@
                                 >
                                     <img 
                                         src={thumbUrl} 
-                                        className="w-full h-full object-cover pointer-events-none" 
+                                        className={`w-full h-full object-cover pointer-events-none transition-opacity duration-500 ${(isCenter && item.video && isVideoActive) ? 'opacity-0' : 'opacity-100'}`}
                                         alt="Gallery item" 
                                         loading="lazy"
                                         onError={(e) => {
@@ -135,56 +160,85 @@
                                         }} 
                                     />
 
-                                    {/* 悬停自动播放视频层：仅当存在视频、卡片位于中间且鼠标悬停时触发 */}
-                                    <AnimatePresence>
-                                        {item.video && isCenter && hoveredCard === idx && (
-                                            <motion.video 
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                exit={{ opacity: 0 }}
-                                                transition={{ duration: 0.3 }}
-                                                src={item.video}
-                                                loop
-                                                muted
-                                                playsInline
-                                                className="absolute inset-0 w-full h-full object-cover z-10 pointer-events-none"
-                                                onError={(e) => {
-                                                    // 防止视频源不支持或 404 时导致的错误
-                                                    e.target.style.display = 'none';
-                                                }}
-                                                ref={(el) => {
-                                                    // 捕获可能由于格式不受支持引起的播放异常
-                                                    if (el) {
-                                                        const playPromise = el.play();
-                                                        if (playPromise !== undefined) {
-                                                            playPromise.catch(() => {});
-                                                        }
-                                                    }
-                                                }}
-                                            />
-                                        )}
-                                    </AnimatePresence>
+                                    {/* 视频加载层：完全受点击控制 */}
+                                    {item.video && isCenter && (
+                                        <video
+                                            ref={(el) => videoRefs.current[idx] = el}
+                                            src={item.video}
+                                            preload="none"
+                                            loop
+                                            muted={isMuted}
+                                            playsInline
+                                            className={`absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-500 ${isVideoActive ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                        />
+                                    )}
 
-                                    {/* 新增：抖音视频跳转图标与播放量 */}
-                                    {item.douyinLink !== undefined && (
+                                    {/* 居中播放按钮指示器 (未播放时显示) - 已去除全局模糊与暗化特效 */}
+                                    {item.video && isCenter && !isVideoActive && (
+                                        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none transition-all duration-300">
+                                            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shadow-2xl">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* 右上角操作按钮组 (静音、全屏) - 仅在中心且有视频时展示 */}
+                                    {item.video && isCenter && (
+                                        <div className="absolute top-4 md:top-6 right-4 md:right-6 z-40 flex flex-col gap-2 md:gap-3">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // 阻止触发卡片的播放/暂停
+                                                    setIsMuted(!isMuted);
+                                                }}
+                                                className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md flex items-center justify-center text-white transition-all border border-white/20 shadow-lg"
+                                            >
+                                                {isMuted ? (
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+                                                ) : (
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (onVideoClick) onVideoClick(item.video);
+                                                }}
+                                                className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md flex items-center justify-center text-white transition-all border border-white/20 shadow-lg"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* 新增：兼容抖音/小红书 视频跳转图标与播放量 */}
+                                    {(item.douyinLink !== undefined || item.xhsLink !== undefined) && (
                                         <div 
                                             className={`absolute bottom-3 left-3 md:bottom-5 md:left-5 z-30 transition-opacity duration-300 ${isCenter ? 'opacity-100' : 'opacity-40'}`}
                                             onClick={(e) => {
                                                 if (isCenter) {
                                                     e.stopPropagation(); // 阻止触发图片放大
-                                                    if (item.douyinLink) {
-                                                        window.open(item.douyinLink, '_blank');
+                                                    const link = item.douyinLink || item.xhsLink;
+                                                    if (link) {
+                                                        window.open(link, '_blank');
                                                     }
                                                 }
                                             }}
                                         >
                                             <button 
-                                                className={`flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-4 h-8 md:h-10 bg-black/40 backdrop-blur-md rounded-full text-white border border-white/20 shadow-lg ${isCenter && item.douyinLink ? 'hover:bg-[#1D1D1F] hover:scale-105 active:scale-95 transition-all cursor-pointer' : (isCenter ? 'cursor-default' : '')}`}
-                                                title={item.douyinLink ? "去抖音看视频" : "播放量"}
+                                                className={`flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-4 h-8 md:h-10 bg-black/40 backdrop-blur-md rounded-full text-white border border-white/20 shadow-lg ${isCenter && (item.douyinLink || item.xhsLink) ? 'hover:bg-[#1D1D1F] hover:scale-105 active:scale-95 transition-all cursor-pointer' : (isCenter ? 'cursor-default' : '')}`}
+                                                title={(item.douyinLink || item.xhsLink) ? "去观看视频" : "播放量"}
                                             >
-                                                <svg className="w-3.5 h-3.5 md:w-[18px] md:h-[18px] shrink-0" viewBox="0 0 448 512" fill="currentColor">
-                                                    <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z"/>
-                                                </svg>
+                                                {item.douyinLink !== undefined && (
+                                                    <svg className="w-3.5 h-3.5 md:w-[18px] md:h-[18px] shrink-0" viewBox="0 0 448 512" fill="currentColor">
+                                                        <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z"/>
+                                                    </svg>
+                                                )}
+                                                {item.xhsLink !== undefined && (
+                                                    <span className="flex items-center justify-center bg-[#FF2442] text-white rounded-full w-3.5 h-3.5 md:w-[18px] md:h-[18px] text-[9px] md:text-[11px] font-bold shrink-0 leading-none">
+                                                        书
+                                                    </span>
+                                                )}
                                                 {item.playCount && (
                                                     <span className="text-[12px] md:text-[14px] font-bold tracking-wide mt-[1px]">
                                                         {item.playCount}
@@ -198,15 +252,13 @@
                         })}
                     </div>
                     
-                    {/* 悬浮左右控制按钮 */}
-                    <button onClick={prevSlide} className="absolute left-4 md:left-10 lg:left-16 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 opacity-30 hover:opacity-100 shadow-sm flex items-center justify-center text-neutral-600 hover:text-black hover:bg-white/60 hover:shadow-[0_8px_32px_rgba(0,0,0,0.15)] hover:scale-110 transition-all duration-300 z-20">
+                    <button onClick={prevSlide} className="absolute left-4 md:left-10 lg:left-16 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/50 backdrop-blur-sm border border-white/20 shadow-md flex items-center justify-center text-neutral-800 hover:text-black hover:bg-white/60 hover:scale-110 active:bg-white/80 active:scale-95 transition-all duration-300 z-20">
                         <i data-lucide="chevron-left" className="w-5 h-5 md:w-6 md:h-6"></i>
                     </button>
-                    <button onClick={nextSlide} className="absolute right-4 md:right-10 lg:right-16 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 opacity-30 hover:opacity-100 shadow-sm flex items-center justify-center text-neutral-600 hover:text-black hover:bg-white/60 hover:shadow-[0_8px_32px_rgba(0,0,0,0.15)] hover:scale-110 transition-all duration-300 z-20">
+                    <button onClick={nextSlide} className="absolute right-4 md:right-10 lg:right-16 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/50 backdrop-blur-sm border border-white/20 shadow-md flex items-center justify-center text-neutral-800 hover:text-black hover:bg-white/60 hover:scale-110 active:bg-white/80 active:scale-95 transition-all duration-300 z-20">
                         <i data-lucide="chevron-right" className="w-5 h-5 md:w-6 md:h-6"></i>
                     </button>
 
-                    {/* 底部拉宽指示器 */}
                     <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-2 md:gap-3 z-20">
                         {items.map((_, idx) => (
                             <button 
@@ -224,12 +276,10 @@
         // ================= 新增：手风琴卡片轮播组件 (AccordionSlider) =================
         const AccordionSlider = ({ items, onVideoClick }) => {
             const [activeIndex, setActiveIndex] = useState(0);
-            const [isMuted, setIsMuted] = useState(false); // 【修改】：默认设为 false，点击播放时直接有声音
-            const [isPlaying, setIsPlaying] = useState(false); // 默认设为 false，防止页面加载时自动播放，彻底省流
-            const videoRefs = useRef([]); // 用于存储视频DOM节点的引用
-            // 【移除】：删除了 hoverTimeoutRef 悬停定时器
+            const [isMuted, setIsMuted] = useState(false); 
+            const [isPlaying, setIsPlaying] = useState(false); 
+            const videoRefs = useRef([]); 
 
-            // 使用 useEffect 统一管理视频的播放与暂停
             useEffect(() => {
                 const video = videoRefs.current[activeIndex];
                 if (video) {
@@ -247,14 +297,11 @@
             const handleSetActive = (idx, autoPlay = false) => {
                 if (activeIndex !== idx) {
                     setActiveIndex(idx);
-                    setIsPlaying(autoPlay); // 根据传入参数决定是否自动播放
+                    setIsPlaying(autoPlay); 
                 }
             };
 
-            // 【移除】：删除了 handleMouseEnter 和 handleMouseLeave 悬停控制函数
-
             return (
-                // 移除了父容器上的 onMouseLeave
                 <div className="w-full flex h-[65vh] md:h-[75vh] lg:h-[80vh] gap-1.5 md:gap-5 mt-4 md:mt-8">
                     {items.map((item, idx) => {
                         const isActive = activeIndex === idx;
@@ -266,31 +313,25 @@
                                 key={idx}
                                 onClick={() => {
                                     if (isActive && videoUrl) {
-                                        // 当前卡片已展开时，点击仅切换播放/暂停状态
                                         setIsPlaying(!isPlaying);
                                     } else {
-                                        // 否则展开被点击的卡片并主动触发播放
                                         handleSetActive(idx, true);
                                     }
                                 }}
-                                // 【移除】：删除了卡片上的 onMouseEnter 和 onMouseLeave 属性
                                 className={`group relative transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] ${
                                     isActive 
                                         ? 'flex-1 md:flex-[3] lg:flex-[4] cursor-zoom-in' 
                                         : 'w-9 shrink-0 md:w-auto md:shrink md:flex-1 cursor-pointer'
                                 }`}
                             >
-                                {/* === 炫酷渐变发光阴影层 === */}
                                 <div className={`absolute inset-0 bg-gradient-to-br from-[#5D5FEF] via-[#c471ed] to-[#00D1FF] blur-xl transition-all duration-700 z-0 ${
                                     isActive ? 'opacity-50 scale-[1.02]' : 'opacity-0 scale-95 group-hover:opacity-40'
                                 }`}></div>
 
-                                {/* 卡片主体内容容器 */}
                                 <div className={`relative w-full h-full overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] z-10 ${
                                     isActive ? 'rounded-3xl md:rounded-[2rem]' : 'rounded-[3rem]'
                                 }`} style={{ backgroundColor: '#111' }}>
                                     
-                                    {/* 背景图片 (未激活、无视频、或视频未播放时显示) */}
                                     <img 
                                         src={thumbUrl} 
                                         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${(isActive && videoUrl && isPlaying) ? 'opacity-0' : (isActive ? 'opacity-100' : 'opacity-70')}`} 
@@ -306,7 +347,7 @@
                                         <video
                                             ref={(el) => videoRefs.current[idx] = el}
                                             src={videoUrl}
-                                            preload="none" // 【新增】：核心省流属性，未点击播放前绝对不加载视频流
+                                            preload="none" 
                                             loop
                                             muted={isMuted} 
                                             playsInline
@@ -317,22 +358,21 @@
                                         />
                                     )}
 
-                                    {/* 暂停时的居中播放图标指示器 */}
+                                    {/* 暂停时的居中播放图标指示器 - 已去除全局模糊与暗化特效 */}
                                     {isActive && videoUrl && !isPlaying && (
-                                        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/20 backdrop-blur-[2px] pointer-events-none transition-all duration-300">
+                                        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none transition-all duration-300">
                                             <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shadow-2xl">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                                             </div>
                                         </div>
                                     )}
 
-                                    {/* 新增：右上角操作按钮组 (垂直排列静音与全屏按钮) */}
+                                    {/* 右上角操作按钮组 (垂直排列静音与全屏按钮) */}
                                     {isActive && videoUrl && (
                                         <div className="absolute top-4 md:top-6 right-4 md:right-6 z-40 flex flex-col gap-2 md:gap-3">
-                                            {/* 声音切换按钮 */}
                                             <button
                                                 onClick={(e) => {
-                                                    e.stopPropagation(); // 阻止事件冒泡，防止点击时意外切换或缩回卡片
+                                                    e.stopPropagation(); 
                                                     setIsMuted(!isMuted);
                                                 }}
                                                 className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md flex items-center justify-center text-white transition-all border border-white/20 shadow-lg"
@@ -344,10 +384,9 @@
                                                 )}
                                             </button>
 
-                                            {/* 全屏播放按钮 */}
                                             <button
                                                 onClick={(e) => {
-                                                    e.stopPropagation(); // 阻止事件冒泡，以免误触暂停
+                                                    e.stopPropagation(); 
                                                     if (onVideoClick) onVideoClick(videoUrl);
                                                 }}
                                                 className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md flex items-center justify-center text-white transition-all border border-white/20 shadow-lg"
@@ -357,17 +396,13 @@
                                         </div>
                                     )}
 
-                                    {/* 底部深色渐变遮罩 (增强文字对比度) */}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-20 pointer-events-none transition-opacity duration-500"></div>
 
-                                    {/* 内容区：编号 + 标题描述 */}
                                     <div className="absolute inset-x-0 bottom-0 p-3 md:p-8 flex items-end gap-3 md:gap-6 z-30 pr-14 md:pr-20">
-                                        {/* 圆形编号指示器 (适配缩小的手机端卡片宽度) */}
                                         <div className={`shrink-0 flex items-center justify-center w-7 h-7 md:w-10 md:h-10 rounded-full bg-white/20 backdrop-blur-md text-white font-bold text-xs md:text-base border border-white/20 transition-all duration-500 shadow-lg ${!isActive && 'mx-auto mb-2 md:mb-4'}`}>
                                             {idx + 1}
                                         </div>
                                         
-                                        {/* 展开后的文字信息 */}
                                         {isActive && (
                                             <motion.div 
                                                 initial={{ opacity: 0, y: 15 }}
@@ -406,7 +441,6 @@
             const [lightboxVideo, setLightboxVideo] = useState(null); 
             const [lightboxScale, setLightboxScale] = useState(1);
 
-            // 【新增】：修复动画丢失和功能丢失的常量和函数
             const handleImageError = (e, fallbackSize = '800x600') => {
                 const originalSrc = e.target.getAttribute('src');
                 let text = "Image";
@@ -416,6 +450,37 @@
                 }
                 e.target.onerror = null; 
                 e.target.src = `https://placehold.co/${fallbackSize}/EEF2FF/5D5FEF?text=${encodeURIComponent(text)}`;
+            };
+
+            const handleCopy = (text) => {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    setToastMsg('邮箱地址已复制到剪贴板！');
+                    setTimeout(() => setToastMsg(''), 3000);
+                } catch (err) {
+                    console.error('复制失败', err);
+                }
+                document.body.removeChild(textArea);
+            };
+
+            const handleNavClick = (e, index) => {
+                e.preventDefault();
+                const sections = ['home', 'about', 'works', 'contact'];
+                const target = sections[index];
+                
+                setNavKeys(prev => ({ ...prev, [target]: prev[target] + 1 }));
+
+                if (target === 'home') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    const el = document.getElementById(target);
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }
+                setIsMenuOpen(false);
             };
 
             const handleWheelZoom = (e) => {
@@ -471,11 +536,10 @@
                 { icon: "cpu", title: "数字化产品落地", desc: "作为系统集成项目管理师，打通物理建筑与数字孪生平台的边界，实现从概念设计到技术落地的全链路闭环。" }
             ];
 
-            // 拦截浏览器原生抛出的媒体播放错误（防止因格式不支持弹出错误蒙版）
             useEffect(() => {
                 const handleRejection = (event) => {
                     if (event.reason && ['NotSupportedError', 'NotAllowedError', 'AbortError'].includes(event.reason.name)) {
-                        event.preventDefault(); // 拦截控制台报错和前端崩溃捕获
+                        event.preventDefault(); 
                     }
                 };
                 window.addEventListener('unhandledrejection', handleRejection);
@@ -491,7 +555,6 @@
             }, []);
 
             useEffect(() => {
-                // 将视频灯箱状态也加入溢出隐藏逻辑
                 if (activeProject || qrModal.isOpen || lightboxImg || lightboxVideo) {
                     document.body.style.overflow = 'hidden';
                 } else {
@@ -507,37 +570,6 @@
             useEffect(() => {
                 lucide.createIcons();
             });
-
-            const handleCopy = (text) => {
-                const textArea = document.createElement("textarea");
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    setToastMsg('邮箱地址已复制到剪贴板！');
-                    setTimeout(() => setToastMsg(''), 3000);
-                } catch (err) {
-                    console.error('复制失败', err);
-                }
-                document.body.removeChild(textArea);
-            };
-
-            const handleNavClick = (e, index) => {
-                e.preventDefault();
-                const sections = ['home', 'about', 'works', 'contact'];
-                const target = sections[index];
-                
-                setNavKeys(prev => ({ ...prev, [target]: prev[target] + 1 }));
-
-                if (target === 'home') {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                } else {
-                    const el = document.getElementById(target);
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }
-                setIsMenuOpen(false);
-            };
 
             const projects = [
                 { 
@@ -561,25 +593,27 @@
                         {
                             title: "Nanobanana+建筑展板设计",
                             images: [
-                                { thumb: "images/AI建筑案例1-01_thumb.jpg", full: "images/AI建筑案例1-01.jpg", video: "images/AI建筑案例1-01.mov" },
-                                { thumb: "images/AI建筑案例1-02_thumb.jpg", full: "images/AI建筑案例1-02.jpg" },
-                                { thumb: "images/AI建筑案例1-03_thumb.jpg", full: "images/AI建筑案例1-03.jpg" },
-                                { thumb: "images/AI建筑案例1-04_thumb.jpg", full: "images/AI建筑案例1-04.jpg" },
-                                { thumb: "images/AI建筑案例2-01_thumb.jpg", full: "images/AI建筑案例2-01.jpg" },
-                                { thumb: "images/AI建筑案例2-02_thumb.jpg", full: "images/AI建筑案例2-02.jpg" },
-                                { thumb: "images/AI建筑案例2-03_thumb.jpg", full: "images/AI建筑案例2-03.jpg" },
-                                { thumb: "images/AI建筑案例2-04_thumb.jpg", full: "images/AI建筑案例2-04.jpg" }
+                                // 为第一张展板加上 xhsLink (小红书链接) 和 playCount (4K)
+                                { thumb: "images/建筑展板/AI建筑案例1-01_thumb.webp", full: "images/建筑展板/AI建筑案例1-01.webp", video: "images/建筑展板/AI建筑案例1-01.mov", xhsLink: "http://xhslink.com/o/36FQ4jgsYmm", playCount: "4K" },
+                                { thumb: "images/建筑展板/AI建筑案例1-02_thumb.webp", full: "images/建筑展板/AI建筑案例1-02.webp" },
+                                { thumb: "images/建筑展板/AI建筑案例1-03_thumb.webp", full: "images/建筑展板/AI建筑案例1-03.webp" },
+                                { thumb: "images/建筑展板/AI建筑案例1-04_thumb.webp", full: "images/建筑展板/AI建筑案例1-04.webp" },
+                                { thumb: "images/建筑展板/AI建筑案例2-01_thumb.webp", full: "images/建筑展板/AI建筑案例2-01.webp" },
+                                { thumb: "images/建筑展板/AI建筑案例2-02_thumb.webp", full: "images/建筑展板/AI建筑案例2-02.webp" },
+                                { thumb: "images/建筑展板/AI建筑案例2-03_thumb.webp", full: "images/建筑展板/AI建筑案例2-03.webp" },
+                                { thumb: "images/建筑展板/AI建筑案例2-04_thumb.webp", full: "images/建筑展板/AI建筑案例2-04.webp" }
                             ]
                         },
                         {
                             title: "Nanobanana+建筑模型设计",
                             images: [
-                                { thumb: "images/建筑手办6_thumb.jpg", full: "images/建筑手办6.jpg", video: "images/建筑手办6.mp4" },
-                                { thumb: "images/建筑手办4_thumb.jpg", full: "images/建筑手办4.jpg", video: "images/建筑手办4.mp4" },
-                                { thumb: "images/建筑手办7_thumb.jpg", full: "images/建筑手办7.jpg", video: "images/建筑手办7.mp4" },
-                                { thumb: "images/建筑手办5_thumb.jpg", full: "images/建筑手办5.jpg" },
-                                { thumb: "images/建筑手办3_thumb.jpg", full: "images/建筑手办3.jpg" },
-                                { thumb: "images/建筑手办9_thumb.jpg", full: "images/建筑手办9.jpg", video: "images/建筑手办9.mp4" }
+                                // 统一添加 images/建筑手办/ 前缀，并将 full 大图后缀改为 .webp
+                                { thumb: "images/建筑手办/建筑手办6_thumb.webp", full: "images/建筑手办/建筑手办6.webp", video: "images/建筑手办/建筑手办6.mp4", douyinLink: "https://v.douyin.com/MgZbFn-kE28/", playCount: "6.8万" },
+                                { thumb: "images/建筑手办/建筑手办4_thumb.webp", full: "images/建筑手办/建筑手办4.webp", video: "images/建筑手办/建筑手办4.mp4" },
+                                { thumb: "images/建筑手办/建筑手办7_thumb.webp", full: "images/建筑手办/建筑手办7.webp", video: "images/建筑手办/建筑手办7.mp4" },
+                                { thumb: "images/建筑手办/建筑手办5_thumb.webp", full: "images/建筑手办/建筑手办5.webp" },
+                                { thumb: "images/建筑手办/建筑手办3_thumb.jpg", full: "images/建筑手办/建筑手办3.jpg" }, 
+                                { thumb: "images/建筑手办/建筑手办9_thumb.webp", full: "images/建筑手办/建筑手办9.webp", video: "images/建筑手办/建筑手办9.mp4" }
                             ]
                         }
                     ]
@@ -596,53 +630,54 @@
                         {
                             title: "Nanobanana+电商案例",
                             images: [
-                                { thumb: "images/电商广告 (2)_thumb.jpg", full: "images/电商广告 (2).jpg", video: "images/电商广告 (2).mp4" },
-                                { thumb: "images/电商广告 (1)_thumb.jpg", full: "images/电商广告 (1).jpg", video: "images/电商广告 (1).mp4" },
-                                { thumb: "images/电商广告 (3)_thumb.jpg", full: "images/电商广告 (3).jpg" },
-                                { thumb: "images/电商广告 (4)_thumb.jpg", full: "images/电商广告 (4).jpg" },
-                                { thumb: "images/电商广告 (5)_thumb.jpg", full: "images/电商广告 (5).jpg" },
-                                { thumb: "images/电商广告 (6)_thumb.jpg", full: "images/电商广告 (6).jpg" }
+                                { thumb: "images/电商广告/电商广告 (2)_thumb.webp", full: "images/电商广告/电商广告 (2).webp", video: "images/电商广告/电商广告 (2).mp4" },
+                                { thumb: "images/电商广告/电商广告 (1)_thumb.webp", full: "images/电商广告/电商广告 (1).webp", video: "images/电商广告/电商广告 (1).mp4" },
+                                { thumb: "images/电商广告/电商广告 (3)_thumb.webp", full: "images/电商广告/电商广告 (3).webp" },
+                                { thumb: "images/电商广告/电商广告 (4)_thumb.webp", full: "images/电商广告/电商广告 (4).webp" },
+                                { thumb: "images/电商广告/电商广告 (5)_thumb.webp", full: "images/电商广告/电商广告 (5).webp" },
+                                { thumb: "images/电商广告/电商广告 (6)_thumb.webp", full: "images/电商广告/电商广告 (6).webp" }
                             ]
                         },
                         {
                             title: "Nanobanana+创意艺术",
                             images: [
-                                { thumb: "images/创意艺术 (4)_thumb.jpg", full: "images/创意艺术 (4).jpg", video: "images/创意艺术 (4).mp4" },
-                                { thumb: "images/创意艺术 (9) .jpg", full: "images/创意艺术 (9) .jpg", video: "images/创意艺术 (9).mp4" },
-                                { thumb: "images/创意艺术 (3)_thumb.jpg", full: "images/创意艺术 (3).jpg", video: "images/创意艺术 (3).mp4" },
-                                { thumb: "images/创意艺术 (5)_thumb.jpg", full: "images/创意艺术 (5).jpg", video: "images/创意艺术 (5).mp4" },
-                                { thumb: "images/创意艺术 (6)_thumb.jpg", full: "images/创意艺术 (6).jpg", video: "images/创意艺术 (6).mp4" },
-                                { thumb: "images/创意艺术 (8)_thumb.jpg", full: "images/创意艺术 (8).jpg" }
+                                { thumb: "images/创意艺术/创意艺术 (4)_thumb.webp", full: "images/创意艺术/创意艺术 (4).webp", video: "images/创意艺术/创意艺术 (4).mp4" },
+                                { thumb: "images/创意艺术/创意艺术 (9)_thumb.webp", full: "images/创意艺术/创意艺术 (9).webp", video: "images/创意艺术/创意艺术 (9).mp4" },
+                                { thumb: "images/创意艺术/创意艺术 (3)_thumb.webp", full: "images/创意艺术/创意艺术 (3).webp", video: "images/创意艺术/创意艺术 (3).mp4" },
+                                { thumb: "images/创意艺术/创意艺术 (5)_thumb.webp", full: "images/创意艺术/创意艺术 (5).webp", video: "images/创意艺术/创意艺术 (5).mp4" },
+                                { thumb: "images/创意艺术/创意艺术 (6)_thumb.webp", full: "images/创意艺术/创意艺术 (6).webp", video: "images/创意艺术/创意艺术 (6).mp4" },
+                                { thumb: "images/创意艺术/创意艺术 (8)_thumb.webp", full: "images/创意艺术/创意艺术 (8).webp" }
                             ]
                         },
                         {
                             title: "Nanobanana+艺术照片",
                             images: [
-                                { thumb: "images/艺术照 (1)_thumb.jpg", full: "images/艺术照 (1).jpg" },
-                                { thumb: "images/艺术照 (2)_thumb.jpg", full: "images/艺术照 (2).jpg" },
-                                { thumb: "images/艺术照 (3)_thumb.jpg", full: "images/艺术照 (3).jpg" },
-                                { thumb: "images/艺术照 (4)_thumb.jpg", full: "images/艺术照 (4).jpg" },
-                                { thumb: "images/艺术照 (5)_thumb.jpg", full: "images/艺术照 (5).jpg" }
+                                { thumb: "images/艺术照/艺术照 (1)_thumb.webp", full: "images/艺术照/艺术照 (1).webp" },
+                                { thumb: "images/艺术照/艺术照 (2)_thumb.webp", full: "images/艺术照/艺术照 (2).webp" },
+                                { thumb: "images/艺术照/艺术照 (3)_thumb.webp", full: "images/艺术照/艺术照 (3).webp" },
+                                { thumb: "images/艺术照/艺术照 (4)_thumb.webp", full: "images/艺术照/艺术照 (4).webp" },
+                                { thumb: "images/艺术照/艺术照 (5)_thumb.webp", full: "images/艺术照/艺术照 (5).webp" }
                             ]
                         },
                         {
                             title: "Nanobanana+人物手办",
                             images: [
-                                { thumb: "images/手办 (1)_thumb.jpg", full: "images/手办 (1).jpg" },
-                                { thumb: "images/手办 (2)_thumb.jpg", full: "images/手办 (2).jpg" },
-                                { thumb: "images/手办 (3)_thumb.jpg", full: "images/手办 (3).jpg" },
-                                { thumb: "images/手办 (4)_thumb.jpg", full: "images/手办 (4).jpg" },
-                                { thumb: "images/手办 (5)_thumb.jpg", full: "images/手办 (5).jpg" },
-                                { thumb: "images/手办 (6)_thumb.jpg", full: "images/手办 (6).jpg" }
+                                { thumb: "images/手办/手办 (1)_thumb.webp", full: "images/手办/手办 (1).webp" },
+                                { thumb: "images/手办/手办 (2)_thumb.webp", full: "images/手办/手办 (2).webp" },
+                                { thumb: "images/手办/手办 (3)_thumb.webp", full: "images/手办/手办 (3).webp" },
+                                { thumb: "images/手办/手办 (4)_thumb.webp", full: "images/手办/手办 (4).webp" },
+                                { thumb: "images/手办/手办 (5)_thumb.webp", full: "images/手办/手办 (5).webp" },
+                                { thumb: "images/手办/手办 (6)_thumb.webp", full: "images/手办/手办 (6).webp" }
                             ]
                         },
                         {
                             title: "Nanobanana+节日海报",
                             images: [
-                                { thumb: "images/节日海报 (1)_thumb.jpg", full: "images/节日海报 (1).jpg", video: "images/节日海报 (1).mp4" },
-                                { thumb: "images/节日海报 (3)_thumb.jpg", full: "images/节日海报 (3).jpg", video: "images/节日海报 (3).mp4" },
-                                { thumb: "images/节日海报 (4)_thumb.jpg", full: "images/节日海报 (4).jpg", video: "images/节日海报 (4).mp4" },
-                                { thumb: "images/节日海报 (5)_thumb.jpg", full: "images/节日海报 (5).jpg", video: "images/节日海报 (5).mp4" }
+                                { thumb: "images/节日海报/节日海报 (1)_thumb.webp", full: "images/节日海报/节日海报 (1).webp", video: "images/节日海报/节日海报 (1).mp4" },
+                                { thumb: "images/节日海报/节日海报 (2)_thumb.webp", full: "images/节日海报/节日海报 (2).webp" },
+                                { thumb: "images/节日海报/节日海报 (3)_thumb.webp", full: "images/节日海报/节日海报 (3).webp", video: "images/节日海报/节日海报 (3).mp4" },
+                                { thumb: "images/节日海报/节日海报 (4)_thumb.webp", full: "images/节日海报/节日海报 (4).webp", video: "images/节日海报/节日海报 (4).mp4" },
+                                { thumb: "images/节日海报/节日海报 (5)_thumb.webp", full: "images/节日海报/节日海报 (5).webp", video: "images/节日海报/节日海报 (5).mp4" }
                             ]
                         }
                     ]
@@ -658,12 +693,11 @@
                     sections: [
                         {
                             title: "Seedance+动画案例",
-                            type: "accordion",
                             images: [
-                                { thumb: "images/seedance01_thumb.png", video: "images/seedance01.mp4", itemTitle: "末世巨鲸｜SEEDANCE", itemDesc: "Seedance 2.0 视觉生成展示" },
-                                { thumb: "images/seedance02_thumb.png", video: "images/seedance02.mp4", itemTitle: "前尘金蝉｜SEEDANCE", itemDesc: "Seedance 2.0 视觉生成展示" },
-                                { thumb: "images/seedance03_thumb.png", video: "images/seedance03.mp4", itemTitle: "黑金法阵｜SEEDANCE", itemDesc: "Seedance 2.0 视觉生成展示" },
-                                { thumb: "images/seedance04_thumb.png", video: "images/seedance04.mp4", itemTitle: "先别急着养龙虾｜SEEDANCE", itemDesc: "OpenClaw AI Makes Your Dreams Come True" }
+                                { thumb: "images/Seedance/seedance01_thumb.webp", full: "images/Seedance/seedance01.webp", video: "images/Seedance/seedance01.mp4" },
+                                { thumb: "images/Seedance/seedance02_thumb.webp", full: "images/Seedance/seedance02.webp", video: "images/Seedance/seedance02.mp4" },
+                                { thumb: "images/Seedance/seedance03_thumb.webp", full: "images/Seedance/seedance03.webp", video: "images/Seedance/seedance03.mp4" },
+                                { thumb: "images/Seedance/seedance04_thumb.webp", full: "images/Seedance/seedance04.webp", video: "images/Seedance/seedance04.mp4" }
                             ]
                         },
                         {
@@ -823,10 +857,19 @@
                                 initial="hidden"
                                 animate="visible"
                             >
-                                <motion.div variants={fadeUpSpringVariant} className="flex flex-wrap items-center gap-3 mb-6 mt-4 lg:mt-0">
-                                    <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#EEF2FF] text-[#5D5FEF] text-[13px] font-bold shadow-sm border border-indigo-50">
-                                        👋 你好，我是建筑师可乐
-                                    </span>
+                                <motion.div variants={fadeUpSpringVariant} className="flex flex-col gap-3 mb-6 mt-4 lg:mt-0">
+                                    <div className="flex items-center">
+                                        <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#EEF2FF] text-[#5D5FEF] text-[13px] font-bold shadow-sm border border-indigo-50">
+                                            👋 你好，我是建筑师可乐
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 md:gap-2.5">
+                                        {['国家一级注册建筑师', '系统集成项目管理工程师', 'AIGC 产品设计师'].map(tag => (
+                                            <span key={tag} className="px-2.5 py-1 bg-white/60 backdrop-blur-sm border border-neutral-400/30 text-neutral-500 text-[10px] md:text-[11px] rounded-md font-medium tracking-wide">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
                                 </motion.div>
                                 
                                 <motion.h1 
@@ -880,7 +923,7 @@
                                     transition={{ duration: 0.3, ease: "easeOut" }}
                                 >
                                     <img 
-                                        src="images/人物图像 .jpg" 
+                                        src="images/人物图像 .webp" 
                                         alt="Architect Kele" 
                                         className="w-full h-full object-cover object-top" 
                                         onError={(e) => handleImageError(e, '400x400')}
@@ -1203,7 +1246,7 @@
                                                         {section.type === 'accordion' ? (
                                                             <AccordionSlider items={section.images} onVideoClick={setLightboxVideo} />
                                                         ) : (
-                                                            <GallerySlider items={section.images} onImageClick={setLightboxImg} />
+                                                            <GallerySlider items={section.images} onImageClick={setLightboxImg} onVideoClick={setLightboxVideo} />
                                                         )}
                                                     </div>
                                                 ))}
