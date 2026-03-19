@@ -49,10 +49,10 @@
         const { motion, AnimatePresence } = window.Motion;
 
         // ================= 3D 卡片轮播组件 =================
-        const GallerySlider = ({ items, onImageClick, onVideoClick }) => {
+        const GallerySlider = ({ items, onImageClick, onVideoClick, showControls = false }) => {
             const [currentIndex, setCurrentIndex] = useState(0);
             
-            // 新增：视频播放状态和静音控制
+            // 视频播放状态和静音控制
             const [playingIndex, setPlayingIndex] = useState(null);
             const [isMuted, setIsMuted] = useState(false); 
             const videoRefs = useRef({});
@@ -62,8 +62,12 @@
 
             // 处理当前中心卡片切换时，自动暂停视频
             useEffect(() => {
-                setPlayingIndex(null);
-            }, [currentIndex]);
+                if (showControls) {
+                    setPlayingIndex(null);
+                } else {
+                    setPlayingIndex(currentIndex); // 自动播放居中的卡片
+                }
+            }, [currentIndex, showControls]);
 
             // 监听播放状态，控制对应 video DOM
             useEffect(() => {
@@ -112,6 +116,14 @@
                                     variants={variants}
                                     initial={false}
                                     animate={variant}
+                                    onHoverStart={() => {
+                                        // 鼠标悬停或手指触摸时触发播放
+                                        if (!showControls && item.video && isCenter) setPlayingIndex(idx);
+                                    }}
+                                    onHoverEnd={() => {
+                                        // 鼠标离开时停止播放
+                                        if (!showControls && item.video && isCenter) setPlayingIndex(null);
+                                    }}
                                     whileHover={
                                         isCenter 
                                             ? { scale: 1.02 } 
@@ -129,8 +141,8 @@
                                     className={`absolute w-[84%] sm:w-[70%] md:w-[50%] lg:w-[38%] aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer ${isCenter ? 'ring-[6px] md:ring-[8px] ring-white/90' : ''}`}
                                     onClick={() => {
                                         if (isCenter) {
-                                            // 修改：如果是视频，点击切换播放状态；如果是图片，点击放大
-                                            if (item.video) {
+                                            // 如果显示控件且是视频，点击切换播放状态；如果是图片或无控件，点击放大
+                                            if (showControls && item.video) {
                                                 setPlayingIndex(playingIndex === idx ? null : idx);
                                             } else if (onImageClick) {
                                                 onImageClick(fullUrl);
@@ -160,22 +172,22 @@
                                         }} 
                                     />
 
-                                    {/* 视频加载层：完全受点击控制 */}
+                                    {/* 视频加载层：完全受点击或悬停控制 */}
                                     {item.video && isCenter && (
                                         <video
                                             ref={(el) => videoRefs.current[idx] = el}
                                             src={item.video}
                                             preload="none"
                                             loop
-                                            muted={isMuted}
+                                            muted={showControls ? isMuted : true}
                                             playsInline
                                             className={`absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-500 ${isVideoActive ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                                             onError={(e) => { e.target.style.display = 'none'; }}
                                         />
                                     )}
 
-                                    {/* 居中播放按钮指示器 (未播放时显示) - 已去除全局模糊与暗化特效 */}
-                                    {item.video && isCenter && !isVideoActive && (
+                                    {/* 居中播放按钮指示器 (未播放时显示) - 仅在需要控制时显示 */}
+                                    {item.video && isCenter && showControls && !isVideoActive && (
                                         <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none transition-all duration-300">
                                             <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shadow-2xl">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -183,8 +195,8 @@
                                         </div>
                                     )}
 
-                                    {/* 右上角操作按钮组 (静音、全屏) - 仅在中心且有视频时展示 */}
-                                    {item.video && isCenter && (
+                                    {/* 右上角操作按钮组 (静音、全屏) - 仅在中心且有视频控制时展示 */}
+                                    {item.video && isCenter && showControls && (
                                         <div className="absolute top-4 md:top-6 right-4 md:right-6 z-40 flex flex-col gap-2 md:gap-3">
                                             <button
                                                 onClick={(e) => {
@@ -273,7 +285,90 @@
         };
         // ================= 轮播组件结束 =================
 
-        // ================= 新增：手风琴卡片轮播组件 (AccordionSlider) =================
+        // ================= 新增：简洁版基础轮播图组件 (SimpleSlider) =================
+        const SimpleSlider = ({ items, onImageClick }) => {
+            const [currentIndex, setCurrentIndex] = useState(0);
+
+            const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % items.length);
+            const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
+
+            const getSrc = (idx) => {
+                const item = items[idx];
+                return typeof item === 'string' ? item : (item.full || item.thumb);
+            };
+
+            return (
+                <div className="relative w-full h-[50vh] md:h-[75vh] bg-[#F8F9FA] rounded-2xl md:rounded-[2rem] overflow-hidden group shadow-sm border border-neutral-100">
+                    <AnimatePresence initial={false}>
+                        {items.map((item, idx) => {
+                            if (idx !== currentIndex) return null;
+                            const src = getSrc(idx);
+                            const prevSrc = getSrc((idx - 1 + items.length) % items.length);
+                            const nextSrc = getSrc((idx + 1) % items.length);
+
+                            return (
+                                <motion.div
+                                    key={idx}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.5 }}
+                                    className="absolute inset-0 flex items-center justify-center"
+                                >
+                                    {/* 背景模糊衬托 (主体背景) */}
+                                    <div className="absolute inset-0 z-0">
+                                        <img src={src} className="w-full h-full object-cover blur-3xl opacity-30 scale-110" alt="" />
+                                    </div>
+
+                                    {/* 左侧：上一张灰色模糊图 (仅宽屏显示) */}
+                                    <div className="hidden md:block absolute left-0 top-0 bottom-0 w-[15%] lg:w-[18%] z-0 overflow-hidden border-r border-white/50 shadow-[10px_0_30px_rgba(0,0,0,0.03)]">
+                                        <img src={prevSrc} className="w-full h-full object-cover blur-xl opacity-50 grayscale scale-110" alt="prev" />
+                                        {/* 半透明遮罩，让它呈现干净的灰色质感 */}
+                                        <div className="absolute inset-0 bg-[#F8F9FA]/40 backdrop-blur-md"></div>
+                                    </div>
+
+                                    {/* 右侧：下一张灰色模糊图 (仅宽屏显示) */}
+                                    <div className="hidden md:block absolute right-0 top-0 bottom-0 w-[15%] lg:w-[18%] z-0 overflow-hidden border-l border-white/50 shadow-[-10px_0_30px_rgba(0,0,0,0.03)]">
+                                        <img src={nextSrc} className="w-full h-full object-cover blur-xl opacity-50 grayscale scale-110" alt="next" />
+                                        <div className="absolute inset-0 bg-[#F8F9FA]/40 backdrop-blur-md"></div>
+                                    </div>
+
+                                    {/* 主图 */}
+                                    <img 
+                                        src={src} 
+                                        alt={`Slide ${idx + 1}`}
+                                        className="relative z-10 w-full h-full object-contain cursor-zoom-in drop-shadow-xl"
+                                        onClick={() => onImageClick && onImageClick(src)}
+                                    />
+                                </motion.div>
+                            );
+                        })}
+                    </AnimatePresence>
+
+                    {/* 控制按钮 */}
+                    <button onClick={(e) => { e.stopPropagation(); prevSlide(); }} className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/20 hover:bg-black/40 text-white flex items-center justify-center backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); nextSlide(); }} className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/20 hover:bg-black/40 text-white flex items-center justify-center backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+
+                    {/* 底部小圆点 */}
+                    <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                        {items.map((_, idx) => (
+                            <button
+                                key={idx}
+                                onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
+                                className={`h-1.5 md:h-2 rounded-full transition-all duration-500 ${idx === currentIndex ? 'bg-[#5D5FEF] w-6 md:w-8 shadow-sm' : 'bg-neutral-300 hover:bg-neutral-400 w-1.5 md:w-2'}`}
+                            />
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+        // ================= 基础轮播组件结束 =================
+
+        // ================= 手风琴卡片轮播组件 (AccordionSlider) =================
         const AccordionSlider = ({ items, onVideoClick }) => {
             const [activeIndex, setActiveIndex] = useState(0);
             const [isMuted, setIsMuted] = useState(false); 
@@ -358,7 +453,7 @@
                                         />
                                     )}
 
-                                    {/* 暂停时的居中播放图标指示器 - 已去除全局模糊与暗化特效 */}
+                                    {/* 暂停时的居中播放图标指示器 */}
                                     {isActive && videoUrl && !isPlaying && (
                                         <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none transition-all duration-300">
                                             <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shadow-2xl">
@@ -574,12 +669,23 @@
             const projects = [
                 { 
                     id: 1, 
-                    title: "交互与沉浸体验", 
+                    title: "交互与产品设计", 
                     image: "images/封面图/交互与沉浸体验封面图.webp", 
                     description: "探索数字与三维空间边界，交互应用案例。", 
                     fullDescription: "探索数字与物理空间的边界，主导 3D 交互应用的从 0 到 1 落地。平衡极致的 WebGL 渲染性能与高品质视觉体验，打造沉浸式的下一代数字化产品。",
                     tags: ["产品管理", "UI/UX", "3D 交互"], 
-                    detailImages: ["images/可乐交互案例 (1).jpg", "images/可乐交互案例 (2).jpg", "images/可乐交互案例 (3).jpg"] 
+                    customContent: true,
+                    sections: [
+                        {
+                            title: "产品交互与页面设计",
+                            type: "simple-slider", 
+                            images: [
+                                "images/交互与产品设计/可乐交互案例 (1).webp",
+                                "images/交互与产品设计/可乐交互案例 (2).webp",
+                                "images/交互与产品设计/可乐交互案例 (3).webp"
+                            ]
+                        }
+                    ]
                 },
                 { 
                     id: 2, 
@@ -593,8 +699,7 @@
                         {
                             title: "Nanobanana+建筑展板设计",
                             images: [
-                                // 为第一张展板加上 xhsLink (小红书链接) 和 playCount (4K)
-                                { thumb: "images/建筑展板/AI建筑案例1-01_thumb.webp", full: "images/建筑展板/AI建筑案例1-01.webp", video: "images/建筑展板/AI建筑案例1-01.mov", xhsLink: "http://xhslink.com/o/36FQ4jgsYmm", playCount: "4K" },
+                                { thumb: "images/建筑展板/AI建筑案例1-01_thumb.webp", full: "images/建筑展板/AI建筑案例1-01.webp", video: "images/建筑展板/Ai建筑案例1-01.webm", xhsLink: "http://xhslink.com/o/36FQ4jgsYmm", playCount: "4K" },
                                 { thumb: "images/建筑展板/AI建筑案例1-02_thumb.webp", full: "images/建筑展板/AI建筑案例1-02.webp" },
                                 { thumb: "images/建筑展板/AI建筑案例1-03_thumb.webp", full: "images/建筑展板/AI建筑案例1-03.webp" },
                                 { thumb: "images/建筑展板/AI建筑案例1-04_thumb.webp", full: "images/建筑展板/AI建筑案例1-04.webp" },
@@ -607,7 +712,6 @@
                         {
                             title: "Nanobanana+建筑模型设计",
                             images: [
-                                // 统一添加 images/建筑手办/ 前缀，并将 full 大图后缀改为 .webp
                                 { thumb: "images/建筑手办/建筑手办6_thumb.webp", full: "images/建筑手办/建筑手办6.webp", video: "images/建筑手办/建筑手办6.mp4", douyinLink: "https://v.douyin.com/MgZbFn-kE28/", playCount: "6.8万" },
                                 { thumb: "images/建筑手办/建筑手办4_thumb.webp", full: "images/建筑手办/建筑手办4.webp", video: "images/建筑手办/建筑手办4.mp4" },
                                 { thumb: "images/建筑手办/建筑手办7_thumb.webp", full: "images/建筑手办/建筑手办7.webp", video: "images/建筑手办/建筑手办7.mp4" },
@@ -630,8 +734,8 @@
                         {
                             title: "Nanobanana+电商案例",
                             images: [
-                                { thumb: "images/电商广告/电商广告 (2)_thumb.webp", full: "images/电商广告/电商广告 (2).webp", video: "images/电商广告/电商广告 (2).mp4" },
-                                { thumb: "images/电商广告/电商广告 (1)_thumb.webp", full: "images/电商广告/电商广告 (1).webp", video: "images/电商广告/电商广告 (1).mp4" },
+                                { thumb: "images/电商广告/电商广告 (2)_thumb.webp", full: "images/电商广告/电商广告 (2).webp", video: "images/电商广告/电商广告 (2).webm" },
+                                { thumb: "images/电商广告/电商广告 (1)_thumb.webp", full: "images/电商广告/电商广告 (1).webp", video: "images/电商广告/电商广告 (1).webm" },
                                 { thumb: "images/电商广告/电商广告 (3)_thumb.webp", full: "images/电商广告/电商广告 (3).webp" },
                                 { thumb: "images/电商广告/电商广告 (4)_thumb.webp", full: "images/电商广告/电商广告 (4).webp" },
                                 { thumb: "images/电商广告/电商广告 (5)_thumb.webp", full: "images/电商广告/电商广告 (5).webp" },
@@ -641,11 +745,11 @@
                         {
                             title: "Nanobanana+创意艺术",
                             images: [
-                                { thumb: "images/创意艺术/创意艺术 (4)_thumb.webp", full: "images/创意艺术/创意艺术 (4).webp", video: "images/创意艺术/创意艺术 (4).mp4" },
-                                { thumb: "images/创意艺术/创意艺术 (9)_thumb.webp", full: "images/创意艺术/创意艺术 (9).webp", video: "images/创意艺术/创意艺术 (9).mp4" },
-                                { thumb: "images/创意艺术/创意艺术 (3)_thumb.webp", full: "images/创意艺术/创意艺术 (3).webp", video: "images/创意艺术/创意艺术 (3).mp4" },
-                                { thumb: "images/创意艺术/创意艺术 (5)_thumb.webp", full: "images/创意艺术/创意艺术 (5).webp", video: "images/创意艺术/创意艺术 (5).mp4" },
-                                { thumb: "images/创意艺术/创意艺术 (6)_thumb.webp", full: "images/创意艺术/创意艺术 (6).webp", video: "images/创意艺术/创意艺术 (6).mp4" },
+                                { thumb: "images/创意艺术/创意艺术 (4)_thumb.webp", full: "images/创意艺术/创意艺术 (4).webp", video: "images/创意艺术/创意艺术 (4).webm" },
+                                { thumb: "images/创意艺术/创意艺术 (9)_thumb.webp", full: "images/创意艺术/创意艺术 (9).webp", video: "images/创意艺术/创意艺术 (9).webm" },
+                                { thumb: "images/创意艺术/创意艺术 (3)_thumb.webp", full: "images/创意艺术/创意艺术 (3).webp", video: "images/创意艺术/创意艺术 (3).webm" },
+                                { thumb: "images/创意艺术/创意艺术 (5)_thumb.webp", full: "images/创意艺术/创意艺术 (5).webp", video: "images/创意艺术/创意艺术 (5).webm" },
+                                { thumb: "images/创意艺术/创意艺术 (6)_thumb.webp", full: "images/创意艺术/创意艺术 (6).webp", video: "images/创意艺术/创意艺术 (6).webm" },
                                 { thumb: "images/创意艺术/创意艺术 (8)_thumb.webp", full: "images/创意艺术/创意艺术 (8).webp" }
                             ]
                         },
@@ -673,11 +777,10 @@
                         {
                             title: "Nanobanana+节日海报",
                             images: [
-                                { thumb: "images/节日海报/节日海报 (1)_thumb.webp", full: "images/节日海报/节日海报 (1).webp", video: "images/节日海报/节日海报 (1).mp4" },
-                                { thumb: "images/节日海报/节日海报 (2)_thumb.webp", full: "images/节日海报/节日海报 (2).webp" },
-                                { thumb: "images/节日海报/节日海报 (3)_thumb.webp", full: "images/节日海报/节日海报 (3).webp", video: "images/节日海报/节日海报 (3).mp4" },
-                                { thumb: "images/节日海报/节日海报 (4)_thumb.webp", full: "images/节日海报/节日海报 (4).webp", video: "images/节日海报/节日海报 (4).mp4" },
-                                { thumb: "images/节日海报/节日海报 (5)_thumb.webp", full: "images/节日海报/节日海报 (5).webp", video: "images/节日海报/节日海报 (5).mp4" }
+                                { thumb: "images/节日海报/节日海报 (1)_thumb.webp", full: "images/节日海报/节日海报 (1).webp", video: "images/节日海报/节日海报 (1).webm" },
+                                { thumb: "images/节日海报/节日海报 (3)_thumb.webp", full: "images/节日海报/节日海报 (3).webp", video: "images/节日海报/节日海报 (3).webm" },
+                                { thumb: "images/节日海报/节日海报 (4)_thumb.webp", full: "images/节日海报/节日海报 (4).webp", video: "images/节日海报/节日海报 (4).webm" },
+                                { thumb: "images/节日海报/节日海报 (5)_thumb.webp", full: "images/节日海报/节日海报 (5).webp", video: "images/节日海报/节日海报 (5).webm" }
                             ]
                         }
                     ]
@@ -694,10 +797,10 @@
                         {
                             title: "Seedance+动画案例",
                             images: [
-                                { thumb: "images/Seedance/seedance01_thumb.webp", full: "images/Seedance/seedance01.webp", video: "images/Seedance/seedance01.mp4" },
-                                { thumb: "images/Seedance/seedance02_thumb.webp", full: "images/Seedance/seedance02.webp", video: "images/Seedance/seedance02.mp4" },
-                                { thumb: "images/Seedance/seedance03_thumb.webp", full: "images/Seedance/seedance03.webp", video: "images/Seedance/seedance03.mp4" },
-                                { thumb: "images/Seedance/seedance04_thumb.webp", full: "images/Seedance/seedance04.webp", video: "images/Seedance/seedance04.mp4" }
+                                { thumb: "images/Seedance/seedance01_thumb.webp", full: "images/Seedance/seedance01.webp", video: "images/Seedance/seedance01.webm" },
+                                { thumb: "images/Seedance/seedance02_thumb.webp", full: "images/Seedance/seedance02.webp", video: "images/Seedance/seedance02.webm" },
+                                { thumb: "images/Seedance/seedance03_thumb.webp", full: "images/Seedance/seedance03.webp", video: "images/Seedance/seedance03.webm" },
+                                { thumb: "images/Seedance/seedance04_thumb.webp", full: "images/Seedance/seedance04.webp", video: "images/Seedance/seedance04.webm" }
                             ]
                         },
                         {
@@ -727,7 +830,6 @@
                     fullDescription: "深耕城市存量更新领域，涵盖社区驿站、街区公共空间、老旧市场改造等多维度实践。作为项目负责人/总监主导从前期策划、方案独立设计到施工管理落地的全过程。",
                     tags: ["城市更新", "实体工程", "空间逻辑"],
                     detailImages: [
-                        // 统一更新路径为 images/城市更新/ 并改为 webp 格式
                         "images/城市更新/城市更新 (1).webp", 
                         "images/城市更新/城市更新 (2).webp",
                         "images/城市更新/城市更新 (3).webp", 
@@ -746,16 +848,36 @@
                     description: "从宏观的城市规划视角出发，塑造具有地域特色与时代精神的城市空间。", 
                     fullDescription: "从宏观的城市规划视角出发，塑造具有地域特色与时代精神的城市空间。项目涵盖生态商务区、高铁客运枢纽核心区、滨水中心城区以及重点高校校区等多个维度的城市级总体设计与修建性详细规划。",
                     tags: ["城市规划", "规划设计", "系统思维"],
-                    detailImages: [
-                        // 更新分类名为城市规划，且路径匹配截图 images/城市设计/城市规划 (X).webp
-                        "images/城市设计/城市规划 (2).webp", 
-                        "images/城市设计/城市规划 (3).webp",
-                        "images/城市设计/城市规划 (4).webp", 
-                        "images/城市设计/城市规划 (5).webp",
-                        "images/城市设计/城市规划 (6).webp", 
-                        "images/城市设计/城市规划 (7).webp",
-                        "images/城市设计/城市规划 (8).webp", 
-                        "images/城市设计/城市规划 (9).webp"
+                    customContent: true, 
+                    sections: [
+                        {
+                            title: "城市规划案例一",
+                            images: [
+                                { thumb: "images/城市设计/城市规划 (2).webp", full: "images/城市设计/城市规划 (2).webp" },
+                                { thumb: "images/城市设计/城市规划 (3).webp", full: "images/城市设计/城市规划 (3).webp" }
+                            ]
+                        },
+                        {
+                            title: "城市规划案例二",
+                            images: [
+                                { thumb: "images/城市设计/城市规划 (4).webp", full: "images/城市设计/城市规划 (4).webp" },
+                                { thumb: "images/城市设计/城市规划 (5).webp" , full: "images/城市设计/城市规划 (5).webp" }
+                            ]
+                        },
+                        {
+                            title: "城市规划案例三",
+                            images: [
+                                { thumb: "images/城市设计/城市规划 (6).webp", full: "images/城市设计/城市规划 (6).webp" },
+                                { thumb: "images/城市设计/城市规划 (7).webp", full: "images/城市设计/城市规划 (7).webp" }
+                            ]
+                        },
+                        {
+                            title: "城市规划案例四",
+                            images: [
+                                { thumb: "images/城市设计/城市规划 (8).webp", full: "images/城市设计/城市规划 (8).webp" },
+                                { thumb: "images/城市设计/城市规划 (9).webp", full: "images/城市设计/城市规划 (9).webp" }
+                            ]
+                        }
                     ]
                 },
                 { 
@@ -1235,7 +1357,7 @@
 
                                     <div className="max-w-[1400px] mx-auto py-10 md:py-12 px-4 md:px-8 flex flex-col gap-6 md:gap-10 pb-32">
                                         
-                                        {/* 【全新渲染逻辑】：如果存在 sections，遍历渲染多个带独立标题的 3D 轮播模块 */}
+                                        {/* 【全新渲染逻辑】：如果存在 sections，遍历渲染多个带独立标题的模块 */}
                                         {activeProject.customContent ? (
                                             <div className="flex flex-col gap-12 md:gap-16 w-full">
                                                 {activeProject.sections && activeProject.sections.map((section, sIdx) => (
@@ -1244,11 +1366,18 @@
                                                             <h3 className="text-xl md:text-2xl font-black text-[#1D1D1F] border-l-[5px] border-[#5D5FEF] pl-4 leading-tight">{section.title}</h3>
                                                         </div>
                                                         
-                                                        {/* 根据 section 的 type 选择使用哪种酷炫画廊组件，并传入放大控制 */}
+                                                        {/* 根据 section 的 type 选择组件 */}
                                                         {section.type === 'accordion' ? (
                                                             <AccordionSlider items={section.images} onVideoClick={setLightboxVideo} />
+                                                        ) : section.type === 'simple-slider' ? (
+                                                            <SimpleSlider items={section.images} onImageClick={setLightboxImg} />
                                                         ) : (
-                                                            <GallerySlider items={section.images} onImageClick={setLightboxImg} onVideoClick={setLightboxVideo} />
+                                                            <GallerySlider 
+                                                                items={section.images} 
+                                                                onImageClick={setLightboxImg} 
+                                                                onVideoClick={setLightboxVideo} 
+                                                                showControls={section.title === "Seedance+动画案例"}
+                                                            />
                                                         )}
                                                     </div>
                                                 ))}
