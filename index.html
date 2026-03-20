@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kele.Arch | AIGC + 设计</title>
+    <title>Arch-kele | AIGC + 设计</title>
+    
+    <!-- 字体预加载 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide 图标库 -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- React, ReactDOM, Babel, Framer Motion CDN -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
             overflow-x: hidden;
@@ -44,12 +43,20 @@
 <body class="bg-white text-[#1D1D1F] antialiased selection:bg-indigo-100">
     <div id="root"></div>
 
+    <!-- Lucide 图标库 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- React, ReactDOM, Babel, Framer Motion CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
         const { motion, AnimatePresence } = window.Motion;
 
-        // ================= 3D 卡片轮播组件 =================
-        const GallerySlider = ({ items, onImageClick, onVideoClick, showControls = false, ratio = '3/4' }) => {
+        // ================= 3D 卡片轮播组件 (已恢复最稳定纯净版本) =================
+        const GallerySlider = ({ items, onImageClick, onVideoClick, showControls = false }) => {
             const [currentIndex, setCurrentIndex] = useState(0);
             
             // 视频播放状态和静音控制
@@ -92,22 +99,12 @@
                 return 'hidden'; 
             };
 
-            const xOffset = ratio === '5/8' ? "70%" : "90%";
-            const hoverXOffset = ratio === '5/8' ? "80%" : "98%";
-
             const variants = {
                 center: { x: "0%", scale: 1, zIndex: 10, opacity: 1, filter: "brightness(100%)", boxShadow: "0 30px 60px -12px rgba(0,0,0,0.3)" },
-                left: { x: `-${xOffset}`, scale: 0.88, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
-                right: { x: xOffset, scale: 0.88, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
+                left: { x: "-90%", scale: 0.88, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
+                right: { x: "90%", scale: 0.88, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
                 hidden: { x: "0%", scale: 0.5, zIndex: 0, opacity: 0, transition: { duration: 0.2 }, boxShadow: "0 0px 0px rgba(0,0,0,0)" }
             };
-
-            let sizeClass = 'w-[84%] sm:w-[70%] md:w-[50%] lg:w-[38%] aspect-[3/4]';
-            if (ratio === '5/8') {
-                sizeClass = 'w-[70%] sm:w-[58%] md:w-[41%] lg:w-[31%] aspect-[5/8]';
-            } else if (ratio === '16/9') {
-                sizeClass = 'w-[95%] sm:w-[85%] md:w-[70%] lg:w-[60%] aspect-video';
-            }
 
             return (
                 <div className="relative w-full h-[65vh] md:h-[85vh] flex flex-col items-center justify-center py-4 mt-2">
@@ -140,8 +137,7 @@
                                             : isSide 
                                                 ? { 
                                                     scale: 0.92, 
-                                                    // 应用刚才算好的动态偏移量 hoverXOffset
-                                                    x: variant === 'left' ? `-${hoverXOffset}` : hoverXOffset, 
+                                                    x: variant === 'left' ? "-98%" : "98%", 
                                                     opacity: 0.95, 
                                                     filter: "brightness(100%)", 
                                                     boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)" 
@@ -149,7 +145,7 @@
                                                 : {}
                                     }
                                     transition={{ type: "spring", stiffness: 250, damping: 25, mass: 0.8 }}
-                                    className={`absolute ${sizeClass} rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer ${isCenter ? 'ring-[6px] md:ring-[8px] ring-white/90 shadow-2xl' : ''}`}
+                                    className={`absolute w-[84%] sm:w-[70%] md:w-[50%] lg:w-[38%] aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer ${isCenter ? 'ring-[6px] md:ring-[8px] ring-white/90 shadow-2xl' : ''}`}
                                     onClick={() => {
                                         if (isCenter) {
                                             // 如果显示控件且是视频，点击切换播放状态；如果是图片或无控件，点击放大
@@ -821,8 +817,8 @@
                     customContent: true,
                     sections: [
                         {
-                            title: "智慧园区、楼盘、酒店系统产品", // 新案例名称 (无"设计"两字)
-                            type: "square-gallery", // 调用完美的 1:1 正方形画廊
+                            title: "智慧园区、楼盘、酒店系统产品", 
+                            type: "square-gallery", 
                             images: [
                                 { thumb: "images/交互与产品设计/可乐交互案例 (1).webp", full: "images/交互与产品设计/可乐交互案例 (1).webp" },
                                 { thumb: "images/交互与产品设计/可乐交互案例 (2).webp", full: "images/交互与产品设计/可乐交互案例 (2).webp" },
@@ -831,8 +827,7 @@
                         },
                         {
                             title: "Gemini+粒子交互+小游戏",
-                            ratio: "5/8",
-                            // 不填 type，默认使用和【Nanobanana+建筑模型设计】相同的 3D 轮播组件
+                            // 【改回原样】去除了 ratio 参数，默认使用极其稳定的 3:4 比例
                             images: [
                                 { thumb: "images/交互与产品设计/粒子交互01.webp", full: "images/交互与产品设计/粒子交互01.webp", video: "images/交互与产品设计/粒子交互01.webm" },
                                 { thumb: "images/交互与产品设计/粒子交互02.webp", full: "images/交互与产品设计/粒子交互02.webp", video: "images/交互与产品设计/粒子交互02.webm" },
@@ -1126,8 +1121,8 @@
                 { name: '小红书', icon: 'book-heart', link: 'https://xhslink.com/m/5e2y1Ncgd6k', type: 'link', subText: '建筑师可乐', color: '#ff2442' },
                 { name: '抖音', icon: 'music', link: 'https://www.douyin.com/user/MS4wLjABAAAAK1WJ7uJJxALyxxEN3MGWKyGu184xrjwQ4dGp1kMVZ3M', type: 'link', subText: '建筑师可乐', color: '#1D1D1F' },
                 { name: 'B站', icon: 'tv', link: 'https://b23.tv/Gsv3F7l', type: 'link', subText: '建筑师可乐', color: '#fb7299' },
-                { name: '公众号', icon: 'message-circle', type: 'modal', qrCode: 'images/建行建远微信公众号.jpg', subText: '渐行建远AIGC', color: '#07c160' },
-                { name: '淘店', icon: 'shopping-bag', type: 'modal', qrCode: 'images/淘宝店二维码.png', subText: '原创教程：建行建远', color: '#ff5000' },
+                { name: '公众号', icon: 'message-circle', type: 'modal', qrCode: 'images/二维码/建行建远微信公众号.webp', subText: '渐行建远AIGC', color: '#07c160' },
+                { name: '淘店', icon: 'shopping-bag', type: 'modal', qrCode: 'images/二维码/淘宝店二维码.png', subText: '原创教程：建行建远', color: '#ff5000' },
                 { name: '电子邮箱', icon: 'mail', value: 'v-luo@foxmail.com', type: 'copy', subText: 'v-luo@foxmail.com', color: '#00a1d6' }
             ];
 
@@ -1143,8 +1138,8 @@
                                 className="text-2xl font-bold tracking-tight shrink-0 cursor-pointer"
                                 onClick={(e) => handleNavClick(e, 0)}
                             >
-                                <span className="text-[#5D5FEF]">Kele</span>
-                                <span className="text-neutral-900">.Arch</span>
+                                <span className="text-[#5D5FEF]">Arch</span>
+                                <span className="text-neutral-900">-kele</span>
                             </motion.div>
                             
                             <div className="hidden md:flex items-center space-x-12 text-[14px] font-semibold text-neutral-500">
@@ -1316,7 +1311,6 @@
                                                     {item.title}
                                                 </h4>
                                                 {item.tag && (
-                                                    // 将原先的灰色文字(text-neutral-500)替换为蓝色(text-[#5D5FEF])，并搭配浅蓝色背景
                                                     <div className="inline-flex items-center px-2.5 py-0.5 bg-[#EEF2FF] border border-indigo-100 text-[#5D5FEF] text-[10px] md:text-[11px] font-bold rounded-md tracking-wider transition-colors duration-500 w-fit">
                                                         {item.tag}
                                                     </div>
@@ -1599,7 +1593,6 @@
                                                                 onImageClick={setLightboxImg} 
                                                                 onVideoClick={setLightboxVideo} 
                                                                 showControls={section.title === "Seedance+动画案例"}
-                                                                ratio={section.ratio}
                                                             />
                                                         )}
                                                     </div>
@@ -1755,8 +1748,8 @@
 
                     <footer className="py-24 border-t border-neutral-100 px-8 bg-white">
                         <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-center gap-8 w-full text-center md:text-left">
-                            <div className="text-2xl font-bold shrink-0"><span className="text-[#5D5FEF]">Kele</span>.Arch</div>
-                            <p className="text-neutral-400 text-sm font-medium italic md:text-right">“跨界融合，让实体工程与数字体验在逻辑与美学的交点处相遇。”</p>
+                            <div className="text-2xl font-bold shrink-0"><span className="text-[#5D5FEF]">Arch</span>-kele</div>
+                            <p className="text-neutral-400 text-sm font-medium italic md:text-right w-full md:w-auto">“跨界融合，让实体工程与数字体验在逻辑与美学的交点处相遇。”</p>
                         </div>
                     </footer>
                 </div>
