@@ -537,15 +537,16 @@
                 return 'hidden'; 
             };
 
+            // 保持稍微收拢的偏移量，让两侧图片紧贴主图
             const variants = {
                 center: { x: "0%", scale: 1, zIndex: 10, opacity: 1, filter: "brightness(100%)", boxShadow: "0 30px 60px -12px rgba(0,0,0,0.3)" },
-                left: { x: "-90%", scale: 0.88, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
-                right: { x: "90%", scale: 0.88, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
+                left: { x: "-40%", scale: 0.85, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
+                right: { x: "40%", scale: 0.85, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
                 hidden: { x: "0%", scale: 0.5, zIndex: 0, opacity: 0, transition: { duration: 0.2 }, boxShadow: "0 0px 0px rgba(0,0,0,0)" }
             };
 
             return (
-                <div className="relative w-full h-[65vh] md:h-[85vh] flex flex-col items-center justify-center py-4 mt-2">
+                <div className="relative w-full h-[65vh] md:h-[85vh] flex flex-col items-center justify-center mt-0 md:-mt-6 mb-4">
                     <div className="relative w-full max-w-[1400px] h-full flex items-center justify-center">
                         {items.map((item, idx) => {
                             const variant = getVariant(idx);
@@ -564,11 +565,11 @@
                                         isCenter 
                                             ? { scale: 1.02 } 
                                             : isSide 
-                                                ? { scale: 0.92, x: variant === 'left' ? "-98%" : "98%", opacity: 0.95, filter: "brightness(100%)", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)" } 
+                                                ? { scale: 0.9, x: variant === 'left' ? "-44%" : "44%", opacity: 0.95, filter: "brightness(100%)", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)" } 
                                                 : {}
                                     }
                                     transition={{ type: "spring", stiffness: 250, damping: 25, mass: 0.8 }}
-                                    className={`absolute w-[92%] sm:w-[75%] md:w-[60%] lg:w-[48%] aspect-square bg-white rounded-2xl md:rounded-[2rem] overflow-hidden cursor-pointer ${isCenter ? 'ring-[6px] md:ring-[8px] ring-white/90 shadow-2xl' : ''}`}
+                                    className={`absolute w-[98%] sm:w-[92%] md:w-[80%] lg:w-[72%] max-w-[84vh] aspect-square bg-white rounded-2xl md:rounded-[2rem] overflow-hidden cursor-pointer ${isCenter ? 'ring-[6px] md:ring-[8px] ring-white/90 shadow-2xl' : ''}`}
                                     onClick={() => {
                                         if (isCenter && onImageClick) onImageClick(fullUrl);
                                         else if (variant === 'left') prevSlide();
@@ -584,7 +585,7 @@
                                 >
                                     <img 
                                         src={thumbUrl} 
-                                        className="w-full h-full object-contain p-4 md:p-8 pointer-events-none transition-opacity duration-500"
+                                        className="w-full h-full object-cover object-top pointer-events-none transition-opacity duration-500"
                                         alt="Gallery item" 
                                         loading="lazy"
                                         onError={(e) => {
@@ -599,19 +600,20 @@
                         })}
                     </div>
                     
-                    <button onClick={prevSlide} className="absolute left-4 md:left-10 lg:left-16 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/50 backdrop-blur-sm border border-white/20 shadow-md flex items-center justify-center text-neutral-800 hover:text-black hover:bg-white/60 hover:scale-110 active:bg-white/80 active:scale-95 transition-all duration-300 z-20">
+                    <button onClick={prevSlide} className="absolute left-2 md:left-6 lg:left-10 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/50 backdrop-blur-sm border border-white/20 shadow-md flex items-center justify-center text-neutral-800 hover:text-black hover:bg-white/60 hover:scale-110 active:bg-white/80 active:scale-95 transition-all duration-300 z-20">
                         <i data-lucide="chevron-left" className="w-5 h-5 md:w-6 md:h-6"></i>
                     </button>
-                    <button onClick={nextSlide} className="absolute right-4 md:right-10 lg:right-16 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/50 backdrop-blur-sm border border-white/20 shadow-md flex items-center justify-center text-neutral-800 hover:text-black hover:bg-white/60 hover:scale-110 active:bg-white/80 active:scale-95 transition-all duration-300 z-20">
+                    <button onClick={nextSlide} className="absolute right-2 md:right-6 lg:right-10 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/50 backdrop-blur-sm border border-white/20 shadow-md flex items-center justify-center text-neutral-800 hover:text-black hover:bg-white/60 hover:scale-110 active:bg-white/80 active:scale-95 transition-all duration-300 z-20">
                         <i data-lucide="chevron-right" className="w-5 h-5 md:w-6 md:h-6"></i>
                     </button>
 
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-2 md:gap-3 z-20">
+                    {/* 核心修改：去除 backdrop-blur-md 和 border，背景改为完全透明 (bg-transparent)，悬停时微微给一点底色 */}
+                    <div className="absolute bottom-6 md:bottom-12 left-1/2 -translate-x-1/2 flex gap-2 md:gap-3 z-30 bg-transparent hover:bg-black/[0.04] px-4 py-2.5 rounded-full transition-all duration-300">
                         {items.map((_, idx) => (
                             <button 
                                 key={idx} 
                                 onClick={() => setCurrentIndex(idx)}
-                                className={`h-1.5 md:h-2 rounded-full transition-all duration-500 ${idx === currentIndex ? 'bg-[#5D5FEF] w-8 md:w-12 shadow-sm' : 'bg-neutral-300 hover:bg-neutral-400 w-2 md:w-2.5'}`}
+                                className={`h-1.5 md:h-2 rounded-full transition-all duration-500 ${idx === currentIndex ? 'bg-[#5D5FEF] w-8 md:w-12 shadow-sm' : 'bg-neutral-400/60 hover:bg-neutral-600/80 w-2 md:w-2.5'}`}
                             />
                         ))}
                     </div>
@@ -768,7 +770,7 @@
                     id: 1, 
                     title: "交互与产品设计", 
                     image: "images/封面图/交互与沉浸体验封面图.webp", 
-                    description: "探索数字与三维空间边界，交互应用案例。", 
+                    description: "主导智慧园区、楼盘与酒店等大场景的三维可视化与系统产品设计，实现数字孪生与应用落地。", 
                     fullDescription: "探索数字与物理空间的边界，主导 3D 交互应用的从 0 到 1 落地。平衡极致的 WebGL 渲染性能与高品质视觉体验，打造沉浸式的下一代数字化产品。",
                     tags: ["产品管理", "UI/UX", "3D 交互"], 
                     customContent: true,
@@ -788,7 +790,7 @@
                     id: 2, 
                     title: "AIGC+建筑空间美学", 
                     image: "images/封面图/AI+建筑封面图.webp", 
-                    description: "基于Stable Diffusion 及 Nanobanana 工作流的建筑空间生成。", 
+                    description: "结合 Nanobanana 创新工作流，突破设计瓶颈，高效生成高品质的建筑空间展板与概念模型。", 
                     fullDescription: "探索AI辅助建筑设计的前沿边界。本系列作品主要展示基于 Stable Diffusion 结合 Nanobanana 创新工作流的建筑空间概念生成。旨在突破传统设计的灵感瓶颈，实现从文本语言到高品质建筑可视化展板的快速转化。",
                     tags: ["SD", "Nanobanana"],
                     customContent: true, 
@@ -813,7 +815,6 @@
                                 { thumb: "images/建筑手办/建筑手办4_thumb.webp", full: "images/建筑手办/建筑手办4.webp", video: "images/建筑手办/建筑手办4.mp4" },
                                 { thumb: "images/建筑手办/建筑手办7_thumb.webp", full: "images/建筑手办/建筑手办7.webp", video: "images/建筑手办/建筑手办7.mp4" },
                                 { thumb: "images/建筑手办/建筑手办5_thumb.webp", full: "images/建筑手办/建筑手办5.webp" },
-                                { thumb: "images/建筑手办/建筑手办3_thumb.jpg", full: "images/建筑手办/建筑手办3.jpg" }, 
                                 { thumb: "images/建筑手办/建筑手办9_thumb.webp", full: "images/建筑手办/建筑手办9.webp", video: "images/建筑手办/建筑手办9.mp4" }
                             ]
                         }
@@ -823,7 +824,7 @@
                     id: 3, 
                     title: "AIGC 视觉生成", 
                     image: "images/封面图/AI视觉封面图 .webp", 
-                    description: "多元视觉场景，将专业技术拆解为零基础可上手的 SOP 路径。", 
+                    description: "涵盖电商广告、创意摄影、人物手办等多元视觉场景，实现高度可控的商业级 AI 图像定制。", 
                     fullDescription: "多元视觉场景，将专业技术拆解为零基础可上手的 SOP 路径。探索 AI 技术在人像摄影与艺术视觉领域的深度应用，通过高度可控的 Nanobanana 工作流实现商业级的高品质出图。",
                     tags: ["知识产品化", "视觉生成", "AI 艺术"],
                     customContent: true, 
@@ -886,7 +887,7 @@
                     id: 4, 
                     title: "AIGC动画+视频教程", 
                     image: "images/封面图/AIGC动画+视频教程封面图.webp", 
-                    description: "探索 AI 技术在动态影像领域的应用，打造高品质的视觉内容与运动图形。", 
+                    description: "结合 Seedance 等先进 AI 视频大模型打造动态影像，并提供系统的 AIGC 动画实战教程。", 
                     fullDescription: "探索 AI 技术在动态影像领域的应用，打造高品质的视觉内容与运动图形。结合最新 AI 视频生成大模型，实现从静态视觉到动态叙事的跨越，赋予设计灵感以鲜活的生命力。",
                     tags: ["动态影像", "视频制作", "运动图形"],
                     customContent: true,
@@ -924,18 +925,31 @@
                     title: "城市更新", 
                     image: "images/封面图/城市更新封面图.webp", 
                     description: "作为国家一级注册建筑师落地的大量实体空间项目。", 
-                    fullDescription: "深耕城市存量更新领域，涵盖社区驿站、街区公共空间、老旧市场改造等多维度实践。作为项目负责人/总监主导从前期策划、方案独立设计到施工管理落地的全过程。",
+                    fullDescription: "深耕城市存量更新领域，涵盖社区驿站、街区公共空间、老旧市场改造等多维度实践。作为项目负责人主导从前期策划、方案独立设计到施工管理落地的全过程。",
                     tags: ["城市更新", "实体工程", "空间逻辑"],
-                    detailImages: [
-                        "images/城市更新/城市更新 (1).webp", 
-                        "images/城市更新/城市更新 (2).webp",
-                        "images/城市更新/城市更新 (3).webp", 
-                        "images/城市更新/城市更新 (4).webp",
-                        "images/城市更新/城市更新 (5).webp",
-                        "images/城市更新/城市更新 (6).webp", 
-                        "images/城市更新/城市更新 (7).webp",
-                        "images/城市更新/城市更新 (8).webp", 
-                        "images/城市更新/城市更新 (9).webp"
+                    customContent: true,
+                    sections: [
+                        {
+                            title: "社区服务改造",
+                            type: "square-gallery",
+                            images: [
+                                { thumb: "images/城市更新/城市更新 (3).webp", full: "images/城市更新/城市更新 (3).webp" },
+                                { thumb: "images/城市更新/城市更新 (4).webp", full: "images/城市更新/城市更新 (4).webp" },
+                                { thumb: "images/城市更新/城市更新 (5).webp", full: "images/城市更新/城市更新 (5).webp" },
+                                { thumb: "images/城市更新/城市更新 (1).webp", full: "images/城市更新/城市更新 (1).webp" },
+                                { thumb: "images/城市更新/城市更新 (2).webp", full: "images/城市更新/城市更新 (2).webp" }
+                            ]
+                        },
+                        {
+                            title: "微更新改造全过程（含独立施工）",
+                            type: "square-gallery",
+                            images: [
+                                { thumb: "images/城市更新/城市更新 (6).webp", full: "images/城市更新/城市更新 (6).webp" },
+                                { thumb: "images/城市更新/城市更新 (7).webp", full: "images/城市更新/城市更新 (7).webp" },
+                                { thumb: "images/城市更新/城市更新 (8).webp", full: "images/城市更新/城市更新 (8).webp" },
+                                { thumb: "images/城市更新/城市更新 (9).webp", full: "images/城市更新/城市更新 (9).webp" }
+                            ]
+                        }
                     ]
                 },
                 { 
@@ -943,36 +957,34 @@
                     title: "城市规划", 
                     image: "images/封面图/城市设计封面图.webp", 
                     description: "从宏观的城市规划视角出发，塑造具有地域特色与时代精神的城市空间。", 
-                    fullDescription: "从宏观的城市规划视角出发，塑造具有地域特色与时代精神的城市空间。项目涵盖生态商务区、高铁客运枢纽核心区、滨水中心城区以及重点高校校区等多个维度的城市级总体设计与修建性详细规划。",
+                    fullDescription: "从宏观的城市规划视角出发，塑造具有地域特色与时代精神的城市空间。项目涵盖生态商务区、高铁客运枢纽核心区、滨水中心城区以及美丽乡村等多个维度的总体设计与修建性详细规划。",
                     tags: ["城市规划", "规划设计", "系统思维"],
                     customContent: true, 
                     sections: [
                         {
-                            title: "城市规划案例一",
+                            title: "城市设计",
+                            type: "square-gallery",
                             images: [
-                                { thumb: "images/城市设计/城市规划 (2).webp", full: "images/城市设计/城市规划 (2).webp" },
-                                { thumb: "images/城市设计/城市规划 (3).webp", full: "images/城市设计/城市规划 (3).webp" }
+                                { thumb: "images/规划设计/城市规划 (2).webp", full: "images/规划设计/城市规划 (2).webp" },
+                                { thumb: "images/规划设计/城市规划 (3).webp", full: "images/规划设计/城市规划 (3).webp" },
+                                { thumb: "images/规划设计/城市规划 (4).webp", full: "images/规划设计/城市规划 (4).webp" },
+                                { thumb: "images/规划设计/城市规划 (5).webp", full: "images/规划设计/城市规划 (5).webp" },
+                                { thumb: "images/规划设计/城市规划 (6).webp", full: "images/规划设计/城市规划 (6).webp" },
+                                { thumb: "images/规划设计/城市规划 (7).webp", full: "images/规划设计/城市规划 (7).webp" }
                             ]
                         },
                         {
-                            title: "城市规划案例二",
+                            title: "乡村规划",
+                            type: "square-gallery",
                             images: [
-                                { thumb: "images/城市设计/城市规划 (4).webp", full: "images/城市设计/城市规划 (4).webp" },
-                                { thumb: "images/城市设计/城市规划 (5).webp" , full: "images/城市设计/城市规划 (5).webp" }
-                            ]
-                        },
-                        {
-                            title: "城市规划案例三",
-                            images: [
-                                { thumb: "images/城市设计/城市规划 (6).webp", full: "images/城市设计/城市规划 (6).webp" },
-                                { thumb: "images/城市设计/城市规划 (7).webp", full: "images/城市设计/城市规划 (7).webp" }
-                            ]
-                        },
-                        {
-                            title: "城市规划案例四",
-                            images: [
-                                { thumb: "images/城市设计/城市规划 (8).webp", full: "images/城市设计/城市规划 (8).webp" },
-                                { thumb: "images/城市设计/城市规划 (9).webp", full: "images/城市设计/城市规划 (9).webp" }
+                                { thumb: "images/规划设计-乡村/乡村规划 (4).webp", full: "images/规划设计-乡村/乡村规划 (4).webp" },
+                                { thumb: "images/规划设计-乡村/乡村规划 (5).webp", full: "images/规划设计-乡村/乡村规划 (5).webp" },
+                                { thumb: "images/规划设计-乡村/乡村规划 (6).webp", full: "images/规划设计-乡村/乡村规划 (6).webp" },
+                                { thumb: "images/规划设计-乡村/乡村规划 (7).webp", full: "images/规划设计-乡村/乡村规划 (7).webp" },
+                                { thumb: "images/规划设计-乡村/乡村规划 (2).webp", full: "images/规划设计-乡村/乡村规划 (2).webp" },
+                                { thumb: "images/规划设计-乡村/乡村规划 (3).webp", full: "images/规划设计-乡村/乡村规划 (3).webp" },
+                                { thumb: "images/规划设计-乡村/乡村规划 (9).webp", full: "images/规划设计-乡村/乡村规划 (9).webp" },
+                                { thumb: "images/规划设计-乡村/乡村规划 (10).webp", full: "images/规划设计-乡村/乡村规划 (10).webp" }
                             ]
                         }
                     ]
@@ -981,40 +993,74 @@
                     id: 7, 
                     title: "建筑设计", 
                     image: "images/封面图/建筑设计封面图 .webp", 
-                    description: "回归理性空间，重新追求技术美与人情味的统一。", 
-                    fullDescription: "回归理性空间，重新追求技术美与人情味的统一。项目涵盖大型高品质居住社区、城市核心商业综合体等类型，在严谨的技术规范与商业逻辑之下，持续探索现代建筑的美学表达与人居体验。",
-                    tags: ["住宅建筑", "商业综合体", "高品质人居"],
-                    detailImages: [
-                        "images/住宅商业 (2).jpg", 
-                        "images/住宅商业 (3).jpg",
-                        "images/住宅商业 (4).jpg", 
-                        "images/住宅商业 (5).jpg",
-                        "images/住宅商业 (6).jpg", 
-                        "images/住宅商业 (7).jpg",
-                        "images/住宅商业 (8).jpg", 
-                        "images/住宅商业 (9).jpg"
+                    description: "聚焦公共与文旅空间，致力于将地域文化、功能需求与现代建筑语境深度融合。", 
+                    fullDescription: "聚焦公共建筑与文旅空间的设计实践。项目涵盖精品文旅民宿、现代医疗教育园区以及各类大型城市公建。致力于将地域文化、复杂的使用功能（如医疗、教育的严谨动线）与现代建筑语境深度融合，打造兼具人文关怀与技术理性的高品质空间。",
+                    tags: ["公共建筑", "文旅民宿", "医疗教育"],
+                    customContent: true,
+                    sections: [
+                        {
+                            title: "文旅民宿",
+                            type: "square-gallery",
+                            images: [
+                                { thumb: "images/建筑设计/建筑设计-文旅民宿 (1).webp", full: "images/建筑设计/建筑设计-文旅民宿 (1).webp" },
+                                { thumb: "images/建筑设计/建筑设计-文旅民宿 (2).webp", full: "images/建筑设计/建筑设计-文旅民宿 (2).webp" },
+                                { thumb: "images/建筑设计/建筑设计-文旅民宿 (3).webp", full: "images/建筑设计/建筑设计-文旅民宿 (3).webp" },
+                                { thumb: "images/建筑设计/建筑设计-文旅民宿 (4).webp", full: "images/建筑设计/建筑设计-文旅民宿 (4).webp" },
+                                { thumb: "images/建筑设计/建筑设计-文旅民宿 (5).webp", full: "images/建筑设计/建筑设计-文旅民宿 (5).webp" }
+                            ]
+                        },
+                        {
+                            title: "医疗教育",
+                            type: "square-gallery",
+                            images: [
+                                { thumb: "images/建筑设计/建筑设计-医疗教育 (1).webp", full: "images/建筑设计/建筑设计-医疗教育 (1).webp" },
+                                { thumb: "images/建筑设计/建筑设计-医疗教育 (2).webp", full: "images/建筑设计/建筑设计-医疗教育 (2).webp" },
+                                { thumb: "images/建筑设计/建筑设计-医疗教育 (3).webp", full: "images/建筑设计/建筑设计-医疗教育 (3).webp" },
+                                { thumb: "images/建筑设计/建筑设计-医疗教育 (4).webp", full: "images/建筑设计/建筑设计-医疗教育 (4).webp" },
+                                { thumb: "images/建筑设计/建筑设计-医疗教育 (5).webp", full: "images/建筑设计/建筑设计-医疗教育 (5).webp" }
+                            ]
+                        },
+                        {
+                            title: "公建设计",
+                            type: "square-gallery",
+                            images: [
+                                { thumb: "images/建筑设计/建筑设计-公建设计 (1).webp", full: "images/建筑设计/建筑设计-公建设计 (1).webp" },
+                                { thumb: "images/建筑设计/建筑设计-公建设计 (2).webp", full: "images/建筑设计/建筑设计-公建设计 (2).webp" },
+                                { thumb: "images/建筑设计/建筑设计-公建设计 (3).webp", full: "images/建筑设计/建筑设计-公建设计 (3).webp" },
+                                { thumb: "images/建筑设计/建筑设计-公建设计 (4).webp", full: "images/建筑设计/建筑设计-公建设计 (4).webp" }
+                            ]
+                        }
                     ]
                 },
                 { 
                     id: 8, 
-                    title: "乡村文旅", 
-                    image: "images/封面图/乡村文旅封面图.webp", 
-                    description: "聚焦乡村振兴与美丽乡村建设，注重保留乡村原有肌理与乡土文化。", 
-                    fullDescription: "聚焦乡村振兴与美丽乡村建设，注重保留乡村原有肌理与乡土文化。项目涵盖村庄整体规划、老旧民居微更新、乡村产业植入以及文旅综合体设计，致力于打造望得见山、看得见水、记得住乡愁的现代宜居乡村。",
-                    tags: ["乡村振兴", "美丽乡村", "乡土文化"],
-                    detailImages: [
-                        "images/乡村文旅 (2).jpg", 
-                        "images/乡村文旅 (3).jpg",
-                        "images/乡村文旅 (4).jpg", 
-                        "images/乡村文旅 (5).jpg",
-                        "images/乡村文旅 (6).jpg", 
-                        "images/乡村文旅 (7).jpg",
-                        "images/乡村文旅 (8).jpg", 
-                        "images/乡村文旅 (9).jpg",
-                        "images/乡村文旅 (10).jpg",
-                        "images/乡村文旅 (11).jpg",
-                        "images/乡村文旅 (12).jpg", 
-                        "images/乡村文旅 (13).jpg"
+                    title: "住宅商业", 
+                    image: "images/封面图/住宅商业封面图.webp", 
+                    description: "在严谨的商业逻辑与规范之下，探索现代人居环境与综合商业的高品质表达。", 
+                    fullDescription: "深耕地产开发领域的建筑实践，项目涵盖大型高品质住宅小区与复合型商业综合体。在严谨的技术规范与商业逻辑框架下，通过精细化的空间推敲与规划布局，持续探索现代建筑的美学溢价、商业潜能与卓越的人居体验。",
+                    tags: ["住宅小区", "商业综合体", "高品质人居"],
+                    customContent: true,
+                    sections: [
+                        {
+                            title: "商业+住宅",
+                            type: "square-gallery",
+                            images: [
+                                { thumb: "images/住宅商业/住宅商业 (9).webp", full: "images/住宅商业/住宅商业 (9).webp" },
+                                { thumb: "images/住宅商业/住宅商业 (8).webp", full: "images/住宅商业/住宅商业 (8).webp" },
+                                { thumb: "images/住宅商业/住宅商业 (6).webp", full: "images/住宅商业/住宅商业 (6).webp" },
+                                { thumb: "images/住宅商业/住宅商业 (7).webp", full: "images/住宅商业/住宅商业 (7).webp" }
+                            ]
+                        },
+                        {
+                            title: "住宅小区",
+                            type: "square-gallery",
+                            images: [
+                                { thumb: "images/住宅商业/住宅商业 (2).webp", full: "images/住宅商业/住宅商业 (2).webp" },
+                                { thumb: "images/住宅商业/住宅商业 (3).webp", full: "images/住宅商业/住宅商业 (3).webp" },
+                                { thumb: "images/住宅商业/住宅商业 (4).webp", full: "images/住宅商业/住宅商业 (4).webp" },
+                                { thumb: "images/住宅商业/住宅商业 (5).webp", full: "images/住宅商业/住宅商业 (5).webp" }
+                            ]
+                        }
                     ]
                 }
             ];
