@@ -49,7 +49,7 @@
         const { motion, AnimatePresence } = window.Motion;
 
         // ================= 3D 卡片轮播组件 =================
-        const GallerySlider = ({ items, onImageClick, onVideoClick, showControls = false }) => {
+        const GallerySlider = ({ items, onImageClick, onVideoClick, showControls = false, ratio = '3/4' }) => {
             const [currentIndex, setCurrentIndex] = useState(0);
             
             // 视频播放状态和静音控制
@@ -92,12 +92,22 @@
                 return 'hidden'; 
             };
 
+            const xOffset = ratio === '5/8' ? "70%" : "90%";
+            const hoverXOffset = ratio === '5/8' ? "80%" : "98%";
+
             const variants = {
                 center: { x: "0%", scale: 1, zIndex: 10, opacity: 1, filter: "brightness(100%)", boxShadow: "0 30px 60px -12px rgba(0,0,0,0.3)" },
-                left: { x: "-90%", scale: 0.88, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
-                right: { x: "90%", scale: 0.88, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
+                left: { x: `-${xOffset}`, scale: 0.88, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
+                right: { x: xOffset, scale: 0.88, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
                 hidden: { x: "0%", scale: 0.5, zIndex: 0, opacity: 0, transition: { duration: 0.2 }, boxShadow: "0 0px 0px rgba(0,0,0,0)" }
             };
+
+            let sizeClass = 'w-[84%] sm:w-[70%] md:w-[50%] lg:w-[38%] aspect-[3/4]';
+            if (ratio === '5/8') {
+                sizeClass = 'w-[70%] sm:w-[58%] md:w-[41%] lg:w-[31%] aspect-[5/8]';
+            } else if (ratio === '16/9') {
+                sizeClass = 'w-[95%] sm:w-[85%] md:w-[70%] lg:w-[60%] aspect-video';
+            }
 
             return (
                 <div className="relative w-full h-[65vh] md:h-[85vh] flex flex-col items-center justify-center py-4 mt-2">
@@ -130,7 +140,8 @@
                                             : isSide 
                                                 ? { 
                                                     scale: 0.92, 
-                                                    x: variant === 'left' ? "-98%" : "98%", 
+                                                    // 应用刚才算好的动态偏移量 hoverXOffset
+                                                    x: variant === 'left' ? `-${hoverXOffset}` : hoverXOffset, 
                                                     opacity: 0.95, 
                                                     filter: "brightness(100%)", 
                                                     boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)" 
@@ -138,7 +149,7 @@
                                                 : {}
                                     }
                                     transition={{ type: "spring", stiffness: 250, damping: 25, mass: 0.8 }}
-                                    className={`absolute w-[84%] sm:w-[70%] md:w-[50%] lg:w-[38%] aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer ${isCenter ? 'ring-[6px] md:ring-[8px] ring-white/90' : ''}`}
+                                    className={`absolute ${sizeClass} rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer ${isCenter ? 'ring-[6px] md:ring-[8px] ring-white/90 shadow-2xl' : ''}`}
                                     onClick={() => {
                                         if (isCenter) {
                                             // 如果显示控件且是视频，点击切换播放状态；如果是图片或无控件，点击放大
@@ -431,6 +442,7 @@
                                         src={thumbUrl} 
                                         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${(isActive && videoUrl && isPlaying) ? 'opacity-0' : (isActive ? 'opacity-100' : 'opacity-70')}`} 
                                         alt="Gallery item"
+                                        loading="lazy"
                                         onError={(e) => {
                                             e.target.onerror = null; 
                                             e.target.src = `https://placehold.co/600x800/1D1D1F/5D5FEF?text=${idx + 1}`;
@@ -815,6 +827,18 @@
                                 { thumb: "images/交互与产品设计/可乐交互案例 (1).webp", full: "images/交互与产品设计/可乐交互案例 (1).webp" },
                                 { thumb: "images/交互与产品设计/可乐交互案例 (2).webp", full: "images/交互与产品设计/可乐交互案例 (2).webp" },
                                 { thumb: "images/交互与产品设计/可乐交互案例 (3).webp", full: "images/交互与产品设计/可乐交互案例 (3).webp" }
+                            ]
+                        },
+                        {
+                            title: "Gemini+粒子交互+小游戏",
+                            ratio: "5/8",
+                            // 不填 type，默认使用和【Nanobanana+建筑模型设计】相同的 3D 轮播组件
+                            images: [
+                                { thumb: "images/交互与产品设计/粒子交互01.webp", full: "images/交互与产品设计/粒子交互01.webp", video: "images/交互与产品设计/粒子交互01.webm" },
+                                { thumb: "images/交互与产品设计/粒子交互02.webp", full: "images/交互与产品设计/粒子交互02.webp", video: "images/交互与产品设计/粒子交互02.webm" },
+                                { thumb: "images/交互与产品设计/粒子交互03.webp", full: "images/交互与产品设计/粒子交互03.webp", video: "images/交互与产品设计/粒子交互03.webm" },
+                                { thumb: "images/交互与产品设计/粒子交互04.webp", full: "images/交互与产品设计/粒子交互04.webp", video: "images/交互与产品设计/粒子交互04.webm" },
+                                { thumb: "images/交互与产品设计/炸弹人02.webp", full: "images/交互与产品设计/炸弹人02.webp", video: "images/交互与产品设计/炸弹人02.webm" }
                             ]
                         }
                     ]
@@ -1575,6 +1599,7 @@
                                                                 onImageClick={setLightboxImg} 
                                                                 onVideoClick={setLightboxVideo} 
                                                                 showControls={section.title === "Seedance+动画案例"}
+                                                                ratio={section.ratio}
                                                             />
                                                         )}
                                                     </div>

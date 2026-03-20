@@ -1,6 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
-for %%f in (*.jpg) do (
+for %%f in (*.webp) do (
     set "filename=%%~nf"
     rem 检查文件名是否已经包含 "_thumb" 后缀
     if "!filename!" neq "!filename:_thumb=!" (
