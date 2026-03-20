@@ -759,7 +759,7 @@
                     icon: "sparkles", 
                     title: "AIGC 创作与内容", 
                     tag: "多平台自媒体博主",
-                    desc: "具备前沿技术洞察力，熟练运用midjourney、Stable Diffusion、Nanobanana、Gemini、NotebookLM 等各类 AI 生成工具实现高效可视化产出，并形成成熟方法论；独立运营小红书、抖音等自媒体【建筑师可乐】，具备从内容策划、制作到传播的完整运营能力。" 
+                    desc: "具备前沿 AIGC 技术洞察力与快速学习能力，熟练运用 Midjourney、Stable Diffusion、Nanobanana、Gemini、NotebookLM 等工具实现高效可视化产出和成熟方法论。独立运营小红书、抖音账号【建筑师可乐】，具备从内容策划、制作到传播的完整运营能力。" 
                 }
             ];
 
@@ -1163,13 +1163,6 @@
                                             👋 你好，我是建筑师可乐
                                         </span>
                                     </div>
-                                    <div className="flex flex-wrap gap-2 md:gap-2.5">
-                                        {['国家一级注册建筑师', '系统集成项目管理工程师', 'AIGC 产品设计师'].map(tag => (
-                                            <span key={tag} className="px-2.5 py-1 bg-white/60 backdrop-blur-sm border border-neutral-400/30 text-neutral-500 text-[10px] md:text-[11px] rounded-md font-medium tracking-wide">
-                                                {tag}
-                                            </span>
-                                        ))}
-                                    </div>
                                 </motion.div>
                                 
                                 <motion.h1 
@@ -1299,7 +1292,8 @@
                                                     {item.title}
                                                 </h4>
                                                 {item.tag && (
-                                                    <div className="inline-flex items-center px-2.5 py-0.5 bg-neutral-50 group-hover:bg-indigo-50 border border-neutral-100 group-hover:border-indigo-100 text-neutral-500 group-hover:text-[#5D5FEF] text-[10px] md:text-[11px] font-bold rounded-md tracking-wider transition-colors duration-500 w-fit">
+                                                    // 将原先的灰色文字(text-neutral-500)替换为蓝色(text-[#5D5FEF])，并搭配浅蓝色背景
+                                                    <div className="inline-flex items-center px-2.5 py-0.5 bg-[#EEF2FF] border border-indigo-100 text-[#5D5FEF] text-[10px] md:text-[11px] font-bold rounded-md tracking-wider transition-colors duration-500 w-fit">
                                                         {item.tag}
                                                     </div>
                                                 )}
@@ -1736,13 +1730,8 @@
 
                     <footer className="py-24 border-t border-neutral-100 px-8 bg-white">
                         <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-center gap-8 w-full text-center md:text-left">
-                            <div className="text-2xl font-bold"><span className="text-[#5D5FEF]">Kele</span>.Arch</div>
-                            <p className="text-neutral-400 text-sm font-medium italic">“跨界融合，让实体工程与数字体验在逻辑与美学的交点处相遇。”</p>
-                            <div className="flex gap-8 text-sm font-bold text-neutral-600 uppercase tracking-widest justify-center">
-                                <a href="#" className="hover:text-[#5D5FEF] transition-colors duration-300">WeChat</a>
-                                <a href="#" className="hover:text-[#5D5FEF] transition-colors duration-300">小红书</a>
-                                <a href="#" className="hover:text-[#5D5FEF] transition-colors duration-300">Behance</a>
-                            </div>
+                            <div className="text-2xl font-bold shrink-0"><span className="text-[#5D5FEF]">Kele</span>.Arch</div>
+                            <p className="text-neutral-400 text-sm font-medium italic md:text-right">“跨界融合，让实体工程与数字体验在逻辑与美学的交点处相遇。”</p>
                         </div>
                     </footer>
                 </div>
