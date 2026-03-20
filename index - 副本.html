@@ -725,42 +725,9 @@
             };
 
             const capabilities = [
-                { 
-                    icon: "pencil-ruler", 
-                    title: "全周期空间设计能力", 
-                    tag: "国家一级注册建筑师",
-                    desc: "具备从策划、方案、深化到落地的完整项目把控能力，擅长复杂系统的逻辑梳理与整体规划，拥有极强的结构化思维与落地执行力。" 
-                },
-                { 
-                    icon: "users", 
-                    title: "项目统筹与跨部门协同能力", 
-                    tag: "工程管理专业背景", 
-                    desc: "具备全流程项目管理、进度管控与风险把控能力，擅长需求拆解、多方沟通与资源协调，能高效推动复杂项目闭环，拥有成熟的目标管理与交付意识。" 
-                },
-                { 
-                    icon: "cpu", 
-                    title: "数字化产品思维", 
-                    tag: "系统集成项目管理工程师",
-                    desc: "具备清晰的产品化思维与系统整合能力，擅长将业务场景转化为可落地的产品逻辑，打通需求、设计与技术链路，有数字化产品经理经验。" 
-                },
-                { 
-                    icon: "palette", 
-                    title: "专业美学把控能力", 
-                    tag: "建筑学专业背景",
-                    desc: "拥有长期空间设计训练形成的严谨审美体系，对构图、比例、视觉节奏与整体质感具备精准判断力，可有效支撑视觉呈现、内容创作与产品体验优化。" 
-                },
-                { 
-                    icon: "book-open", 
-                    title: "技术驱动设计与知识沉淀能力", 
-                    tag: "软件讲师 / 教程创作者",
-                    desc: "持续主动探索前沿工具与高效工作方法，熟练运用全栈设计软件并积极迭代工作流；运营原创教程店铺，具备极强的学习总结、内容体系化与知识复用能力。" 
-                },
-                { 
-                    icon: "sparkles", 
-                    title: "AIGC 创作与内容能力", 
-                    tag: "多平台自媒体博主",
-                    desc: "具备极强的行业敏感度与前沿技术洞察力，在 AIGC 发展初期便率先切入研究与创作。熟练运用各类 AI 生成工具实现高效可视化产出，并形成成熟方法论；长期运营小红书、抖音、B 站、公众号等全平台账号，具备从内容策划、制作到传播的完整自媒体运营能力。" 
-                }
+                { icon: "layout", title: "空间逻辑构建", desc: "基于 15 年建筑设计经验，将严谨的工程思维注入创意方案，确保空间功能与美学的深度统一。" },
+                { icon: "sparkles", title: "AIGC 美学把控", desc: "熟练运用 Stable Diffusion、Midjourney 等工具，通过精确的提示词工程实现对设计风格的工业级控制。" },
+                { icon: "cpu", title: "数字化产品落地", desc: "作为系统集成项目管理师，打通物理建筑与数字孪生平台的边界，实现从概念设计到技术落地的全链路闭环。" }
             ];
 
             useEffect(() => {
@@ -1272,7 +1239,7 @@
                             
                             <motion.div 
                                 key={`about-grid-${navKeys.about}`}
-                                className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8"
+                                className="grid grid-cols-1 md:grid-cols-3 gap-8"
                                 variants={slowStaggerContainer}
                                 initial="hidden"
                                 whileInView="visible"
@@ -1282,39 +1249,13 @@
                                     <motion.div 
                                         key={idx} 
                                         variants={fadeUpSpringVariant}
-                                        className="group relative bg-white p-6 md:p-7 rounded-[2rem] border border-neutral-100 hover:border-transparent shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_30px_60px_-15px_rgba(93,95,239,0.15)] hover:-translate-y-2 transition-all duration-500 flex flex-col h-full overflow-hidden cursor-default"
+                                        className="group bg-[#F8F9FF] p-10 rounded-[2.5rem] border border-transparent hover:border-indigo-100 hover:bg-white shadow-sm transition-all duration-300"
                                     >
-                                        {/* 悬停时的环境光晕背景装饰 */}
-                                        <div className="absolute -top-24 -right-24 w-56 h-56 bg-gradient-to-br from-indigo-50/80 to-blue-50/50 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-0"></div>
-
-                                        <div className="flex items-center gap-4 mb-5 relative z-10">
-                                            {/* 左侧图标 */}
-                                            <div className="w-14 h-14 shrink-0 bg-[#F8F9FA] group-hover:bg-[#5D5FEF] rounded-[1.25rem] flex items-center justify-center text-neutral-600 group-hover:text-white transition-all duration-500 shadow-sm border border-neutral-100 group-hover:border-transparent group-hover:scale-110 group-hover:-rotate-3">
-                                                <i data-lucide={item.icon} className="w-6 h-6 md:w-7 md:h-7"></i>
-                                            </div>
-                                            
-                                            {/* 右侧：标题与标签上下分布 */}
-                                            <div className="flex flex-col gap-1.5 pt-0.5">
-                                                <h4 className="text-[16px] md:text-[17px] font-black text-[#1D1D1F] group-hover:text-[#5D5FEF] transition-colors duration-300 leading-tight">
-                                                    {item.title}
-                                                </h4>
-                                                {item.tag && (
-                                                    <div className="inline-flex items-center px-2.5 py-0.5 bg-neutral-50 group-hover:bg-indigo-50 border border-neutral-100 group-hover:border-indigo-100 text-neutral-500 group-hover:text-[#5D5FEF] text-[10px] md:text-[11px] font-bold rounded-md tracking-wider transition-colors duration-500 w-fit">
-                                                        {item.tag}
-                                                    </div>
-                                                )}
-                                            </div>
+                                        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-10 shadow-lg shadow-indigo-50 group-hover:bg-[#5D5FEF] group-hover:text-white transition-colors duration-300">
+                                            <i data-lucide={item.icon} className="w-8 h-8"></i>
                                         </div>
-
-                                        {/* 描述文字区域 */}
-                                        <div className="relative z-10 flex-1 flex flex-col">
-                                            <p className="text-neutral-500 leading-[1.8] font-medium text-[13px] md:text-[14px] text-justify mt-1">
-                                                {item.desc}
-                                            </p>
-                                        </div>
-
-                                        {/* 底部悬停动态高亮线 */}
-                                        <div className="absolute bottom-0 left-0 w-0 h-1.5 bg-gradient-to-r from-[#5D5FEF] to-[#00D1FF] group-hover:w-full transition-all duration-700 ease-out z-10"></div>
+                                        <h4 className="text-2xl font-black mb-6 group-hover:text-[#5D5FEF] transition-colors duration-300">{item.title}</h4>
+                                        <p className="text-neutral-500 leading-relaxed font-medium">{item.desc}</p>
                                     </motion.div>
                                 ))}
                             </motion.div>
