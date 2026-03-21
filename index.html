@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arch-kele | AIGC + 设计</title>
     
-    <!-- 字体预加载 -->
+    <!-- 性能优化：字体预加载与提前连接 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://unpkg.com">
     
-    <!-- Tailwind CSS CDN -->
+    <!-- Tailwind CSS CDN (必须保留在头部防止页面闪烁) -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
@@ -43,6 +45,7 @@
 <body class="bg-white text-[#1D1D1F] antialiased selection:bg-indigo-100">
     <div id="root"></div>
 
+    <!-- 性能优化：将笨重的框架脚本移到 DOM 底部，优先渲染页面骨架 -->
     <!-- Lucide 图标库 -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- React, ReactDOM, Babel, Framer Motion CDN -->
@@ -55,7 +58,7 @@
         const { useState, useEffect, useRef } = React;
         const { motion, AnimatePresence } = window.Motion;
 
-        // ================= 3D 卡片轮播组件 (已恢复最稳定纯净版本) =================
+        // ================= 3D 卡片轮播组件 (Arch-kele 2.0 稳定纯净版) =================
         const GallerySlider = ({ items, onImageClick, onVideoClick, showControls = false }) => {
             const [currentIndex, setCurrentIndex] = useState(0);
             
@@ -67,16 +70,14 @@
             const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % items.length);
             const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
 
-            // 处理当前中心卡片切换时，自动暂停视频
             useEffect(() => {
                 if (showControls) {
                     setPlayingIndex(null);
                 } else {
-                    setPlayingIndex(currentIndex); // 自动播放居中的卡片
+                    setPlayingIndex(currentIndex); 
                 }
             }, [currentIndex, showControls]);
 
-            // 监听播放状态，控制对应 video DOM
             useEffect(() => {
                 const video = videoRefs.current[currentIndex];
                 if (video) {
@@ -124,11 +125,9 @@
                                     initial={false}
                                     animate={variant}
                                     onHoverStart={() => {
-                                        // 鼠标悬停或手指触摸时触发播放
                                         if (!showControls && item.video && isCenter) setPlayingIndex(idx);
                                     }}
                                     onHoverEnd={() => {
-                                        // 鼠标离开时停止播放
                                         if (!showControls && item.video && isCenter) setPlayingIndex(null);
                                     }}
                                     whileHover={
@@ -148,7 +147,6 @@
                                     className={`absolute w-[84%] sm:w-[70%] md:w-[50%] lg:w-[38%] aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer ${isCenter ? 'ring-[6px] md:ring-[8px] ring-white/90 shadow-2xl' : ''}`}
                                     onClick={() => {
                                         if (isCenter) {
-                                            // 如果显示控件且是视频，点击切换播放状态；如果是图片或无控件，点击放大
                                             if (showControls && item.video) {
                                                 setPlayingIndex(playingIndex === idx ? null : idx);
                                             } else if (onImageClick) {
@@ -179,7 +177,6 @@
                                         }} 
                                     />
 
-                                    {/* 视频加载层：完全受点击或悬停控制 */}
                                     {item.video && isCenter && (
                                         <video
                                             ref={(el) => videoRefs.current[idx] = el}
@@ -193,7 +190,6 @@
                                         />
                                     )}
 
-                                    {/* 居中播放按钮指示器 (未播放时显示) - 仅在需要控制时显示 */}
                                     {item.video && isCenter && showControls && !isVideoActive && (
                                         <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none transition-all duration-300">
                                             <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shadow-2xl">
@@ -202,12 +198,11 @@
                                         </div>
                                     )}
 
-                                    {/* 右上角操作按钮组 (静音、全屏) - 仅在中心且有视频控制时展示 */}
                                     {item.video && isCenter && showControls && (
                                         <div className="absolute top-4 md:top-6 right-4 md:right-6 z-40 flex flex-col gap-2 md:gap-3">
                                             <button
                                                 onClick={(e) => {
-                                                    e.stopPropagation(); // 阻止触发卡片的播放/暂停
+                                                    e.stopPropagation(); 
                                                     setIsMuted(!isMuted);
                                                 }}
                                                 className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md flex items-center justify-center text-white transition-all border border-white/20 shadow-lg"
@@ -230,17 +225,14 @@
                                         </div>
                                     )}
 
-                                    {/* 兼容抖音/小红书 视频跳转图标与播放量 */}
                                     {(item.douyinLink !== undefined || item.xhsLink !== undefined) && (
                                         <div 
                                             className={`absolute bottom-3 left-3 md:bottom-5 md:left-5 z-30 transition-opacity duration-300 ${isCenter ? 'opacity-100' : 'opacity-40'}`}
                                             onClick={(e) => {
                                                 if (isCenter) {
-                                                    e.stopPropagation(); // 阻止触发图片放大
+                                                    e.stopPropagation(); 
                                                     const link = item.douyinLink || item.xhsLink;
-                                                    if (link) {
-                                                        window.open(link, '_blank');
-                                                    }
+                                                    if (link) window.open(link, '_blank');
                                                 }
                                             }}
                                         >
@@ -290,9 +282,8 @@
                 </div>
             );
         };
-        // ================= 轮播组件结束 =================
 
-        // ================= 新增：简洁版基础轮播图组件 (SimpleSlider) =================
+        // ================= 基础长条轮播图组件 (SimpleSlider) =================
         const SimpleSlider = ({ items, onImageClick }) => {
             const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -322,29 +313,25 @@
                                     transition={{ duration: 0.5 }}
                                     className="absolute inset-0 flex items-center justify-center"
                                 >
-                                    {/* 背景模糊衬托 (主体背景) */}
                                     <div className="absolute inset-0 z-0">
-                                        <img src={src} className="w-full h-full object-cover blur-3xl opacity-30 scale-110" alt="" />
+                                        <img src={src} className="w-full h-full object-cover blur-3xl opacity-30 scale-110" alt="" loading="lazy" />
                                     </div>
 
-                                    {/* 左侧：上一张灰色模糊图 (仅宽屏显示) */}
                                     <div className="hidden md:block absolute left-0 top-0 bottom-0 w-[15%] lg:w-[18%] z-0 overflow-hidden border-r border-white/50 shadow-[10px_0_30px_rgba(0,0,0,0.03)]">
-                                        <img src={prevSrc} className="w-full h-full object-cover blur-xl opacity-50 grayscale scale-110" alt="prev" />
-                                        {/* 半透明遮罩，让它呈现干净的灰色质感 */}
+                                        <img src={prevSrc} className="w-full h-full object-cover blur-xl opacity-50 grayscale scale-110" alt="prev" loading="lazy" />
                                         <div className="absolute inset-0 bg-[#F8F9FA]/40 backdrop-blur-md"></div>
                                     </div>
 
-                                    {/* 右侧：下一张灰色模糊图 (仅宽屏显示) */}
                                     <div className="hidden md:block absolute right-0 top-0 bottom-0 w-[15%] lg:w-[18%] z-0 overflow-hidden border-l border-white/50 shadow-[-10px_0_30px_rgba(0,0,0,0.03)]">
-                                        <img src={nextSrc} className="w-full h-full object-cover blur-xl opacity-50 grayscale scale-110" alt="next" />
+                                        <img src={nextSrc} className="w-full h-full object-cover blur-xl opacity-50 grayscale scale-110" alt="next" loading="lazy" />
                                         <div className="absolute inset-0 bg-[#F8F9FA]/40 backdrop-blur-md"></div>
                                     </div>
 
-                                    {/* 主图 */}
                                     <img 
                                         src={src} 
                                         alt={`Slide ${idx + 1}`}
                                         className="relative z-10 w-full h-full object-contain cursor-zoom-in drop-shadow-xl"
+                                        loading="lazy"
                                         onClick={() => onImageClick && onImageClick(src)}
                                     />
                                 </motion.div>
@@ -352,7 +339,6 @@
                         })}
                     </AnimatePresence>
 
-                    {/* 控制按钮 */}
                     <button onClick={(e) => { e.stopPropagation(); prevSlide(); }} className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/20 hover:bg-black/40 text-white flex items-center justify-center backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all z-20 shadow-lg">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                     </button>
@@ -360,7 +346,6 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </button>
 
-                    {/* 底部小圆点 */}
                     <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
                         {items.map((_, idx) => (
                             <button
@@ -373,7 +358,6 @@
                 </div>
             );
         };
-        // ================= 基础轮播组件结束 =================
 
         // ================= 手风琴卡片轮播组件 (AccordionSlider) =================
         const AccordionSlider = ({ items, onVideoClick }) => {
@@ -387,9 +371,7 @@
                 if (video) {
                     if (isPlaying) {
                         const playPromise = video.play();
-                        if (playPromise !== undefined) {
-                            playPromise.catch(() => {});
-                        }
+                        if (playPromise !== undefined) playPromise.catch(() => {});
                     } else {
                         video.pause();
                     }
@@ -414,11 +396,8 @@
                             <div
                                 key={idx}
                                 onClick={() => {
-                                    if (isActive && videoUrl) {
-                                        setIsPlaying(!isPlaying);
-                                    } else {
-                                        handleSetActive(idx, true);
-                                    }
+                                    if (isActive && videoUrl) setIsPlaying(!isPlaying);
+                                    else handleSetActive(idx, true);
                                 }}
                                 className={`group relative transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] ${
                                     isActive 
@@ -445,7 +424,6 @@
                                         }}
                                     />
 
-                                    {/* 激活时准备的视频 */}
                                     {isActive && videoUrl && (
                                         <video
                                             ref={(el) => videoRefs.current[idx] = el}
@@ -455,13 +433,10 @@
                                             muted={isMuted} 
                                             playsInline
                                             className={`absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-500 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}
-                                            onError={(e) => {
-                                                e.target.style.display = 'none';
-                                            }}
+                                            onError={(e) => { e.target.style.display = 'none'; }}
                                         />
                                     )}
 
-                                    {/* 暂停时的居中播放图标指示器 */}
                                     {isActive && videoUrl && !isPlaying && (
                                         <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none transition-all duration-300">
                                             <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shadow-2xl">
@@ -470,7 +445,6 @@
                                         </div>
                                     )}
 
-                                    {/* 右上角操作按钮组 (垂直排列静音与全屏按钮) */}
                                     {isActive && videoUrl && (
                                         <div className="absolute top-4 md:top-6 right-4 md:right-6 z-40 flex flex-col gap-2 md:gap-3">
                                             <button
@@ -529,9 +503,8 @@
                 </div>
             );
         };
-        // ================= 手风琴组件结束 =================
 
-        // ================= 新增：专属 1:1 正方形画廊组件 (SquareGallerySlider) =================
+        // ================= 1:1 正方形画廊组件 (SquareGallerySlider) =================
         const SquareGallerySlider = ({ items, onImageClick }) => {
             const [currentIndex, setCurrentIndex] = useState(0);
             const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % items.length);
@@ -545,7 +518,6 @@
                 return 'hidden'; 
             };
 
-            // 保持稍微收拢的偏移量，让两侧图片紧贴主图
             const variants = {
                 center: { x: "0%", scale: 1, zIndex: 10, opacity: 1, filter: "brightness(100%)", boxShadow: "0 30px 60px -12px rgba(0,0,0,0.3)" },
                 left: { x: "-40%", scale: 0.85, zIndex: 5, opacity: 0.5, filter: "brightness(60%)", boxShadow: "0 20px 40px -10px rgba(0,0,0,0.2)" },
@@ -615,7 +587,6 @@
                         <i data-lucide="chevron-right" className="w-5 h-5 md:w-6 md:h-6"></i>
                     </button>
 
-                    {/* 核心修改：去除 backdrop-blur-md 和 border，背景改为完全透明 (bg-transparent)，悬停时微微给一点底色 */}
                     <div className="absolute bottom-6 md:bottom-12 left-1/2 -translate-x-1/2 flex gap-2 md:gap-3 z-30 bg-transparent hover:bg-black/[0.04] px-4 py-2.5 rounded-full transition-all duration-300">
                         {items.map((_, idx) => (
                             <button 
@@ -628,7 +599,6 @@
                 </div>
             );
         };
-        // ================= 正方形专属轮播组件结束 =================
 
         const App = () => {
             const [isScrolled, setIsScrolled] = useState(false);
@@ -694,42 +664,22 @@
                 });
             };
 
-            const springDampingTransition = {
-                type: "spring",
-                stiffness: 50,
-                damping: 14,
-                mass: 1
-            };
-
+            const springDampingTransition = { type: "spring", stiffness: 50, damping: 14, mass: 1 };
             const fadeUpSpringVariant = {
                 hidden: { opacity: 0, y: 25 },
                 visible: { opacity: 1, y: 0, transition: springDampingTransition }
             };
-
             const slowStaggerContainer = {
                 hidden: { opacity: 0 },
-                visible: { 
-                    opacity: 1, 
-                    transition: { staggerChildren: 0.2 } 
-                }
+                visible: { opacity: 1, transition: { staggerChildren: 0.2 } }
             };
-
             const textBlindsContainer = {
                 hidden: { opacity: 0 },
-                visible: { 
-                    opacity: 1, 
-                    transition: { staggerChildren: 0.06, delayChildren: 0.1 } 
-                }
+                visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } }
             };
-
             const textBlindsChild = {
                 hidden: { opacity: 0, y: 40, scale: 0.7 },
-                visible: { 
-                    opacity: 1, 
-                    y: 0, 
-                    scale: 1, 
-                    transition: { type: "spring", stiffness: 150, damping: 15 } 
-                }
+                visible: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 150, damping: 15 } }
             };
 
             const capabilities = [
@@ -782,9 +732,7 @@
             }, []);
 
             useEffect(() => {
-                const handleScroll = () => {
-                    setIsScrolled(window.scrollY > 20);
-                };
+                const handleScroll = () => setIsScrolled(window.scrollY > 20);
                 window.addEventListener('scroll', handleScroll);
                 return () => window.removeEventListener('scroll', handleScroll);
             }, []);
@@ -795,16 +743,11 @@
                 } else {
                     document.body.style.overflow = 'unset';
                 }
-                
-                if (!lightboxImg) {
-                    setLightboxScale(1);
-                }
+                if (!lightboxImg) setLightboxScale(1);
                 return () => { document.body.style.overflow = 'unset'; }
             }, [activeProject, qrModal.isOpen, lightboxImg, lightboxVideo]);
 
-            useEffect(() => {
-                lucide.createIcons();
-            });
+            useEffect(() => { lucide.createIcons(); });
 
             const projects = [
                 { 
@@ -827,7 +770,6 @@
                         },
                         {
                             title: "Gemini+粒子交互+小游戏",
-                            // 【改回原样】去除了 ratio 参数，默认使用极其稳定的 3:4 比例
                             images: [
                                 { thumb: "images/交互与产品设计/粒子交互01.webp", full: "images/交互与产品设计/粒子交互01.webp", video: "images/交互与产品设计/粒子交互01.webm" },
                                 { thumb: "images/交互与产品设计/粒子交互02.webp", full: "images/交互与产品设计/粒子交互02.webp", video: "images/交互与产品设计/粒子交互02.webm" },
@@ -985,21 +927,21 @@
                             title: "社区服务改造",
                             type: "square-gallery",
                             images: [
-                                { thumb: "images/城市更新/城市更新 (3).webp", full: "images/城市更新/城市更新 (3).webp" },
-                                { thumb: "images/城市更新/城市更新 (4).webp", full: "images/城市更新/城市更新 (4).webp" },
-                                { thumb: "images/城市更新/城市更新 (5).webp", full: "images/城市更新/城市更新 (5).webp" },
-                                { thumb: "images/城市更新/城市更新 (1).webp", full: "images/城市更新/城市更新 (1).webp" },
-                                { thumb: "images/城市更新/城市更新 (2).webp", full: "images/城市更新/城市更新 (2).webp" }
+                                { thumb: "images/城市更新/城市更新 (3)_thumb.webp", full: "images/城市更新/城市更新 (3).webp" },
+                                { thumb: "images/城市更新/城市更新 (4)_thumb.webp", full: "images/城市更新/城市更新 (4).webp" },
+                                { thumb: "images/城市更新/城市更新 (5)_thumb.webp", full: "images/城市更新/城市更新 (5).webp" },
+                                { thumb: "images/城市更新/城市更新 (1)_thumb.webp", full: "images/城市更新/城市更新 (1).webp" },
+                                { thumb: "images/城市更新/城市更新 (2)_thumb.webp", full: "images/城市更新/城市更新 (2).webp" }
                             ]
                         },
                         {
                             title: "微更新改造全过程（含独立施工）",
                             type: "square-gallery",
                             images: [
-                                { thumb: "images/城市更新/城市更新 (6).webp", full: "images/城市更新/城市更新 (6).webp" },
-                                { thumb: "images/城市更新/城市更新 (7).webp", full: "images/城市更新/城市更新 (7).webp" },
-                                { thumb: "images/城市更新/城市更新 (8).webp", full: "images/城市更新/城市更新 (8).webp" },
-                                { thumb: "images/城市更新/城市更新 (9).webp", full: "images/城市更新/城市更新 (9).webp" }
+                                { thumb: "images/城市更新/城市更新 (6)_thumb.webp", full: "images/城市更新/城市更新 (6).webp" },
+                                { thumb: "images/城市更新/城市更新 (7)_thumb.webp", full: "images/城市更新/城市更新 (7).webp" },
+                                { thumb: "images/城市更新/城市更新 (8)_thumb.webp", full: "images/城市更新/城市更新 (8).webp" },
+                                { thumb: "images/城市更新/城市更新 (9)_thumb.webp", full: "images/城市更新/城市更新 (9).webp" }
                             ]
                         }
                     ]
@@ -1017,26 +959,26 @@
                             title: "城市设计",
                             type: "square-gallery",
                             images: [
-                                { thumb: "images/规划设计/城市规划 (2).webp", full: "images/规划设计/城市规划 (2).webp" },
-                                { thumb: "images/规划设计/城市规划 (3).webp", full: "images/规划设计/城市规划 (3).webp" },
-                                { thumb: "images/规划设计/城市规划 (4).webp", full: "images/规划设计/城市规划 (4).webp" },
-                                { thumb: "images/规划设计/城市规划 (5).webp", full: "images/规划设计/城市规划 (5).webp" },
-                                { thumb: "images/规划设计/城市规划 (6).webp", full: "images/规划设计/城市规划 (6).webp" },
-                                { thumb: "images/规划设计/城市规划 (7).webp", full: "images/规划设计/城市规划 (7).webp" }
+                                { thumb: "images/规划设计/城市规划 (2)_thumb.webp", full: "images/规划设计/城市规划 (2).webp" },
+                                { thumb: "images/规划设计/城市规划 (3)_thumb.webp", full: "images/规划设计/城市规划 (3).webp" },
+                                { thumb: "images/规划设计/城市规划 (4)_thumb.webp", full: "images/规划设计/城市规划 (4).webp" },
+                                { thumb: "images/规划设计/城市规划 (5)_thumb.webp", full: "images/规划设计/城市规划 (5).webp" },
+                                { thumb: "images/规划设计/城市规划 (6)_thumb.webp", full: "images/规划设计/城市规划 (6).webp" },
+                                { thumb: "images/规划设计/城市规划 (7)_thumb.webp", full: "images/规划设计/城市规划 (7).webp" }
                             ]
                         },
                         {
                             title: "乡村规划",
                             type: "square-gallery",
                             images: [
-                                { thumb: "images/规划设计-乡村/乡村规划 (4).webp", full: "images/规划设计-乡村/乡村规划 (4).webp" },
-                                { thumb: "images/规划设计-乡村/乡村规划 (5).webp", full: "images/规划设计-乡村/乡村规划 (5).webp" },
-                                { thumb: "images/规划设计-乡村/乡村规划 (6).webp", full: "images/规划设计-乡村/乡村规划 (6).webp" },
-                                { thumb: "images/规划设计-乡村/乡村规划 (7).webp", full: "images/规划设计-乡村/乡村规划 (7).webp" },
-                                { thumb: "images/规划设计-乡村/乡村规划 (2).webp", full: "images/规划设计-乡村/乡村规划 (2).webp" },
-                                { thumb: "images/规划设计-乡村/乡村规划 (3).webp", full: "images/规划设计-乡村/乡村规划 (3).webp" },
-                                { thumb: "images/规划设计-乡村/乡村规划 (9).webp", full: "images/规划设计-乡村/乡村规划 (9).webp" },
-                                { thumb: "images/规划设计-乡村/乡村规划 (10).webp", full: "images/规划设计-乡村/乡村规划 (10).webp" }
+                                { thumb: "images/规划设计-乡村/乡村规划 (4)_thumb.webp", full: "images/规划设计-乡村/乡村规划 (4).webp" },
+                                { thumb: "images/规划设计-乡村/乡村规划 (5)_thumb.webp", full: "images/规划设计-乡村/乡村规划 (5).webp" },
+                                { thumb: "images/规划设计-乡村/乡村规划 (6)_thumb.webp", full: "images/规划设计-乡村/乡村规划 (6).webp" },
+                                { thumb: "images/规划设计-乡村/乡村规划 (7)_thumb.webp", full: "images/规划设计-乡村/乡村规划 (7).webp" },
+                                { thumb: "images/规划设计-乡村/乡村规划 (2)_thumb.webp", full: "images/规划设计-乡村/乡村规划 (2).webp" },
+                                { thumb: "images/规划设计-乡村/乡村规划 (3)_thumb.webp", full: "images/规划设计-乡村/乡村规划 (3).webp" },
+                                { thumb: "images/规划设计-乡村/乡村规划 (9)_thumb.webp", full: "images/规划设计-乡村/乡村规划 (9).webp" },
+                                { thumb: "images/规划设计-乡村/乡村规划 (10)_thumb.webp", full: "images/规划设计-乡村/乡村规划 (10).webp" }
                             ]
                         }
                     ]
@@ -1054,32 +996,32 @@
                             title: "文旅民宿",
                             type: "square-gallery",
                             images: [
-                                { thumb: "images/建筑设计/建筑设计-文旅民宿 (1).webp", full: "images/建筑设计/建筑设计-文旅民宿 (1).webp" },
-                                { thumb: "images/建筑设计/建筑设计-文旅民宿 (2).webp", full: "images/建筑设计/建筑设计-文旅民宿 (2).webp" },
-                                { thumb: "images/建筑设计/建筑设计-文旅民宿 (3).webp", full: "images/建筑设计/建筑设计-文旅民宿 (3).webp" },
-                                { thumb: "images/建筑设计/建筑设计-文旅民宿 (4).webp", full: "images/建筑设计/建筑设计-文旅民宿 (4).webp" },
-                                { thumb: "images/建筑设计/建筑设计-文旅民宿 (5).webp", full: "images/建筑设计/建筑设计-文旅民宿 (5).webp" }
+                                { thumb: "images/建筑设计/建筑设计-文旅民宿 (1)_thumb.webp", full: "images/建筑设计/建筑设计-文旅民宿 (1).webp" },
+                                { thumb: "images/建筑设计/建筑设计-文旅民宿 (2)_thumb.webp", full: "images/建筑设计/建筑设计-文旅民宿 (2).webp" },
+                                { thumb: "images/建筑设计/建筑设计-文旅民宿 (3)_thumb.webp", full: "images/建筑设计/建筑设计-文旅民宿 (3).webp" },
+                                { thumb: "images/建筑设计/建筑设计-文旅民宿 (4)_thumb.webp", full: "images/建筑设计/建筑设计-文旅民宿 (4).webp" },
+                                { thumb: "images/建筑设计/建筑设计-文旅民宿 (5)_thumb.webp", full: "images/建筑设计/建筑设计-文旅民宿 (5).webp" }
                             ]
                         },
                         {
                             title: "医疗教育",
                             type: "square-gallery",
                             images: [
-                                { thumb: "images/建筑设计/建筑设计-医疗教育 (1).webp", full: "images/建筑设计/建筑设计-医疗教育 (1).webp" },
-                                { thumb: "images/建筑设计/建筑设计-医疗教育 (2).webp", full: "images/建筑设计/建筑设计-医疗教育 (2).webp" },
-                                { thumb: "images/建筑设计/建筑设计-医疗教育 (3).webp", full: "images/建筑设计/建筑设计-医疗教育 (3).webp" },
-                                { thumb: "images/建筑设计/建筑设计-医疗教育 (4).webp", full: "images/建筑设计/建筑设计-医疗教育 (4).webp" },
-                                { thumb: "images/建筑设计/建筑设计-医疗教育 (5).webp", full: "images/建筑设计/建筑设计-医疗教育 (5).webp" }
+                                { thumb: "images/建筑设计/建筑设计-医疗教育 (1)_thumb.webp", full: "images/建筑设计/建筑设计-医疗教育 (1).webp" },
+                                { thumb: "images/建筑设计/建筑设计-医疗教育 (2)_thumb.webp", full: "images/建筑设计/建筑设计-医疗教育 (2).webp" },
+                                { thumb: "images/建筑设计/建筑设计-医疗教育 (3)_thumb.webp", full: "images/建筑设计/建筑设计-医疗教育 (3).webp" },
+                                { thumb: "images/建筑设计/建筑设计-医疗教育 (4)_thumb.webp", full: "images/建筑设计/建筑设计-医疗教育 (4).webp" },
+                                { thumb: "images/建筑设计/建筑设计-医疗教育 (5)_thumb.webp", full: "images/建筑设计/建筑设计-医疗教育 (5).webp" }
                             ]
                         },
                         {
                             title: "公建设计",
                             type: "square-gallery",
                             images: [
-                                { thumb: "images/建筑设计/建筑设计-公建设计 (1).webp", full: "images/建筑设计/建筑设计-公建设计 (1).webp" },
-                                { thumb: "images/建筑设计/建筑设计-公建设计 (2).webp", full: "images/建筑设计/建筑设计-公建设计 (2).webp" },
-                                { thumb: "images/建筑设计/建筑设计-公建设计 (3).webp", full: "images/建筑设计/建筑设计-公建设计 (3).webp" },
-                                { thumb: "images/建筑设计/建筑设计-公建设计 (4).webp", full: "images/建筑设计/建筑设计-公建设计 (4).webp" }
+                                { thumb: "images/建筑设计/建筑设计-公建设计 (1)_thumb.webp", full: "images/建筑设计/建筑设计-公建设计 (1).webp" },
+                                { thumb: "images/建筑设计/建筑设计-公建设计 (2)_thumb.webp", full: "images/建筑设计/建筑设计-公建设计 (2).webp" },
+                                { thumb: "images/建筑设计/建筑设计-公建设计 (3)_thumb.webp", full: "images/建筑设计/建筑设计-公建设计 (3).webp" },
+                                { thumb: "images/建筑设计/建筑设计-公建设计 (4)_thumb.webp", full: "images/建筑设计/建筑设计-公建设计 (4).webp" }
                             ]
                         }
                     ]
@@ -1097,20 +1039,20 @@
                             title: "商业+住宅",
                             type: "square-gallery",
                             images: [
-                                { thumb: "images/住宅商业/住宅商业 (9).webp", full: "images/住宅商业/住宅商业 (9).webp" },
-                                { thumb: "images/住宅商业/住宅商业 (8).webp", full: "images/住宅商业/住宅商业 (8).webp" },
-                                { thumb: "images/住宅商业/住宅商业 (6).webp", full: "images/住宅商业/住宅商业 (6).webp" },
-                                { thumb: "images/住宅商业/住宅商业 (7).webp", full: "images/住宅商业/住宅商业 (7).webp" }
+                                { thumb: "images/住宅商业/住宅商业 (9)_thumb.webp", full: "images/住宅商业/住宅商业 (9).webp" },
+                                { thumb: "images/住宅商业/住宅商业 (8)_thumb.webp", full: "images/住宅商业/住宅商业 (8).webp" },
+                                { thumb: "images/住宅商业/住宅商业 (6)_thumb.webp", full: "images/住宅商业/住宅商业 (6).webp" },
+                                { thumb: "images/住宅商业/住宅商业 (7)_thumb.webp", full: "images/住宅商业/住宅商业 (7).webp" }
                             ]
                         },
                         {
                             title: "住宅小区",
                             type: "square-gallery",
                             images: [
-                                { thumb: "images/住宅商业/住宅商业 (2).webp", full: "images/住宅商业/住宅商业 (2).webp" },
-                                { thumb: "images/住宅商业/住宅商业 (3).webp", full: "images/住宅商业/住宅商业 (3).webp" },
-                                { thumb: "images/住宅商业/住宅商业 (4).webp", full: "images/住宅商业/住宅商业 (4).webp" },
-                                { thumb: "images/住宅商业/住宅商业 (5).webp", full: "images/住宅商业/住宅商业 (5).webp" }
+                                { thumb: "images/住宅商业/住宅商业 (2)_thumb.webp", full: "images/住宅商业/住宅商业 (2).webp" },
+                                { thumb: "images/住宅商业/住宅商业 (3)_thumb.webp", full: "images/住宅商业/住宅商业 (3).webp" },
+                                { thumb: "images/住宅商业/住宅商业 (4)_thumb.webp", full: "images/住宅商业/住宅商业 (4).webp" },
+                                { thumb: "images/住宅商业/住宅商业 (5)_thumb.webp", full: "images/住宅商业/住宅商业 (5).webp" }
                             ]
                         }
                     ]
@@ -1228,7 +1170,7 @@
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ ...springDampingTransition, delay: 0.2 }}
                             >
-                                <div className="absolute inset-[-60px] md:inset-[-100px] bg-blue-400/10 blur-[80px] md:blur-[120px] rounded-full"></div>
+                                <div className="absolute inset-[-60px] md:inset-[-100px] bg-blue-400/10 md:blur-[120px] rounded-full hidden md:block"></div>
                                 <motion.div 
                                     className="relative w-64 h-64 md:w-[420px] md:h-[420px] rounded-full border-[8px] md:border-[12px] border-white shadow-[0_20px_50px_rgba(0,0,0,0.08)] overflow-hidden z-10 cursor-pointer"
                                     whileHover={{ scale: 1.02 }}
@@ -1296,16 +1238,13 @@
                                         variants={fadeUpSpringVariant}
                                         className="group relative bg-white p-6 md:p-7 rounded-[2rem] border border-neutral-100 hover:border-transparent shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_30px_60px_-15px_rgba(93,95,239,0.15)] hover:-translate-y-2 transition-all duration-500 flex flex-col h-full overflow-hidden cursor-default"
                                     >
-                                        {/* 悬停时的环境光晕背景装饰 */}
                                         <div className="absolute -top-24 -right-24 w-56 h-56 bg-gradient-to-br from-indigo-50/80 to-blue-50/50 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-0"></div>
 
                                         <div className="flex items-center gap-4 mb-5 relative z-10">
-                                            {/* 左侧图标 */}
                                             <div className="w-14 h-14 shrink-0 bg-[#F8F9FA] group-hover:bg-[#5D5FEF] rounded-[1.25rem] flex items-center justify-center text-neutral-600 group-hover:text-white transition-all duration-500 shadow-sm border border-neutral-100 group-hover:border-transparent group-hover:scale-110 group-hover:-rotate-3">
                                                 <i data-lucide={item.icon} className="w-6 h-6 md:w-7 md:h-7"></i>
                                             </div>
                                             
-                                            {/* 右侧：标题与标签上下分布 */}
                                             <div className="flex flex-col gap-1.5 pt-0.5">
                                                 <h4 className="text-[16px] md:text-[17px] font-black text-[#1D1D1F] group-hover:text-[#5D5FEF] transition-colors duration-300 leading-tight">
                                                     {item.title}
@@ -1318,14 +1257,12 @@
                                             </div>
                                         </div>
 
-                                        {/* 描述文字区域 */}
                                         <div className="relative z-10 flex-1 flex flex-col">
                                             <p className="text-neutral-500 leading-[1.8] font-medium text-[13px] md:text-[14px] text-justify mt-1">
                                                 {item.desc}
                                             </p>
                                         </div>
 
-                                        {/* 底部悬停动态高亮线 */}
                                         <div className="absolute bottom-0 left-0 w-0 h-1.5 bg-gradient-to-r from-[#5D5FEF] to-[#00D1FF] group-hover:w-full transition-all duration-700 ease-out z-10"></div>
                                     </motion.div>
                                 ))}
@@ -1550,7 +1487,6 @@
                                     返回作品集
                                 </button>
 
-                                {/* 滚动内容区域: 注意加了 overflow-x-hidden 防止内部出现横向滚动条 */}
                                 <div className="absolute inset-0 overflow-y-auto overflow-x-hidden no-scrollbar z-10">
                                     <div className="bg-white border-b border-neutral-100">
                                         <div className="max-w-[1400px] mx-auto pt-12 md:pt-20 pb-10 px-4 md:px-8">
@@ -1570,8 +1506,6 @@
                                     </div>
 
                                     <div className="max-w-[1400px] mx-auto py-10 md:py-12 px-4 md:px-8 flex flex-col gap-6 md:gap-10 pb-32">
-                                        
-                                        {/* 【全新渲染逻辑】：如果存在 sections，遍历渲染多个带独立标题的模块 */}
                                         {activeProject.customContent ? (
                                             <div className="flex flex-col gap-12 md:gap-16 w-full">
                                                 {activeProject.sections && activeProject.sections.map((section, sIdx) => (
@@ -1580,7 +1514,6 @@
                                                             <h3 className="text-xl md:text-2xl font-black text-[#1D1D1F] border-l-[5px] border-[#5D5FEF] pl-4 leading-tight">{section.title}</h3>
                                                         </div>
                                                         
-                                                        {/* 根据 section 的 type 选择组件 */}
                                                         {section.type === 'square-gallery' ? (
                                                             <SquareGallerySlider items={section.images} onImageClick={setLightboxImg} />
                                                         ) : section.type === 'accordion' ? (
@@ -1599,7 +1532,6 @@
                                                 ))}
                                             </div>
                                         ) : (
-                                            /* 常规的长图展示布局 */
                                             activeProject.detailImages && activeProject.detailImages.map((imgUrl, idx) => (
                                                 <motion.div
                                                     key={idx}
@@ -1619,7 +1551,6 @@
                                                 </motion.div>
                                             ))
                                         )}
-                                        
                                     </div>
                                 </div>
                             </motion.div>
